@@ -1,5 +1,6 @@
 #ifndef TASKS_H
 #define TASKS_H
+#include "QtWidgets"
 #include <QString>
 #include <QObject>
 #include <iostream>
@@ -39,15 +40,18 @@ class Task: public QObject{
     }
 
     public slots:
-        static void createNewTask(QWidget* mainWindow, Task* tail, QString name, int* position){
+        static void createNewTask(QGridLayout* grid, Task* tail, QString name, int* position, int* col){
             Task* newTask = new Task();
             (*newTask).name = name;
             (*newTask).next = nullptr;
             tail->next = newTask;
-            QPushButton* newTaskButton = new QPushButton(name, mainWindow);
+            QPushButton* newTaskButton = new QPushButton(name);
+            grid->addWidget(newTaskButton, 0, *col, 1, 1);
+            //buttonBox->addWidget(newTaskButton);
             newTaskButton->setFixedSize(220, 220);
             newTaskButton->move(*position, 0);
             *position += 220;
+            *col += 1;
             newTaskButton->show();
         }
 };
