@@ -6,7 +6,17 @@ QT = core gui
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 SOURCES += \
+    MainWindow.cpp \
+    MainWindowUI.cpp \
+    Task.cpp \
+    TaskCreationWindow.cpp \
     main.cpp
 
 HEADERS += \
-    tasks.h
+    MainWindow.h \
+    MainWindowUI.h \
+    Task.h \
+    TaskCreationWindowUI.h
+
+
+
