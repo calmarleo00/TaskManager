@@ -3,7 +3,7 @@
 #include <QObject>
 #include <QPushButton>
 #include <QGridLayout>
-#include <TaskCreationWindowUI.h>.h>
+#include <TaskCreationWindowUI.h>
 #ifndef MAINWINDOWUI_H
 #define MAINWINDOWUI_H
 
@@ -34,7 +34,7 @@ class MainWindowUI{
             mainGrid->addWidget(scrollArea, 0, 0, 1, 3);
             // Create three button at the bottom of the window
             newTaskButton->setParent(mainWindow);
-            newTaskButton->connect(newTaskButton, &QPushButton::released, new TaskCreationWindowUI(), &TaskCreationWindowUI::setupTaskCreationUI);
+            newTaskButton->connect(newTaskButton, &QPushButton::released, new TaskCreationWindowUI(), &TaskCreationWindowUI::setupTaskUI);
             modifyTaskButton->setParent(mainWindow);
             deleteTaskButton->setParent(mainWindow);
             mainGrid->addWidget(newTaskButton, 1, 0, 1, 1);

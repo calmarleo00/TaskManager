@@ -9,6 +9,7 @@ SOURCES += \
     MainWindow.cpp \
     MainWindowUI.cpp \
     Task.cpp \
+    Task2.cpp \
     TaskCreationWindow.cpp \
     main.cpp
 

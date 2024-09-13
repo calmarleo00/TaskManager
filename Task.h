@@ -9,7 +9,7 @@ class Task: public QObject{
     QString name;
     QString description;
     Task* next;
-    virtual ~Task() {};
+
     public:
         Task();
         Task(QString name);
@@ -19,6 +19,7 @@ class Task: public QObject{
         void setTaskDescription(Task* next);
         Task* getTaskNext();
         void setTaskNext(Task* next);
+        void execute();
 };
 
 #endif // TASK_H
