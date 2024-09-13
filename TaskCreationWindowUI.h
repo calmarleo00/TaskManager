@@ -28,6 +28,11 @@ class TaskCreationWindowUI : public QWidget{
     QStackedWidget* widgets = new QStackedWidget();
     QWidget* taskTimerWindowWidget = nullptr;
     QVBoxLayout* taskTimerWindowLayout = nullptr;
+    QCheckBox* hourCheckBox = nullptr;
+    QCheckBox* secondCheckBox = nullptr;
+    bool toChangeStartDate = true;
+    QDateEdit* startDateEdit = nullptr;
+    QDateEdit* endDateEdit = nullptr;
     public:
         TaskCreationWindowUI(){
             taskCreationWindowWidget = new QWidget();
@@ -99,7 +104,7 @@ class TaskCreationWindowUI : public QWidget{
 
             isExternal->connect(isExternal, &QCheckBox::stateChanged, this, &TaskCreationWindowUI::disableAddition);
 
-            QPushButton* nextPageButton = new QPushButton("Next");
+            QPushButton* nextPageButton = new QPushButton("Next >");
             addAttributeButton = new QPushButton("Add Attribute");
 
             nextPageButton->connect(nextPageButton, &QPushButton::released, this, &TaskCreationWindowUI::nextPage);
@@ -227,20 +232,23 @@ class TaskCreationWindowUI : public QWidget{
 
             QCalendarWidget* calendar = new QCalendarWidget();
             calendarLayout->addWidget(calendar);
-
+            calendar->connect(calendar, &QCalendarWidget::clicked, this, &TaskCreationWindowUI::setDate);
             QWidget* dateContainer = new QWidget();
             QHBoxLayout* dateContainerLayout = new QHBoxLayout();
             dateContainer->setLayout(dateContainerLayout);
 
             QLabel* startDate = new QLabel("Start Date:");
-            QDateEdit* startDateEdit = new QDateEdit();
+            startDateEdit = new QDateEdit();
 
             dateContainerLayout->addWidget(startDate, 0, Qt::AlignLeft);
             dateContainerLayout->addWidget(startDateEdit, 0, Qt::AlignLeft);
 
 
             QLabel* endDate = new QLabel("End Date:");
-            QDateEdit* endDateEdit = new QDateEdit();
+            endDateEdit = new QDateEdit();
+            QDate end(3000, 1, 1);
+
+            endDateEdit->setDate(end);
 
             dateContainerLayout->addWidget(endDate, 0, Qt::AlignRight);
             dateContainerLayout->addWidget(endDateEdit, 0, Qt::AlignRight);
@@ -279,8 +287,8 @@ class TaskCreationWindowUI : public QWidget{
             QVBoxLayout* checkBoxLayout = new QVBoxLayout();
             checkBoxContainer->setLayout(checkBoxLayout);
 
-            QCheckBox* hourCheckBox = new QCheckBox("Hours");
-            QCheckBox* secondCheckBox = new QCheckBox("Seconds");
+            hourCheckBox = new QCheckBox("Hours");
+            secondCheckBox = new QCheckBox("Seconds");
 
             checkBoxLayout->addWidget(hourCheckBox);
             checkBoxLayout->addWidget(secondCheckBox);
@@ -291,6 +299,21 @@ class TaskCreationWindowUI : public QWidget{
 
             hoursGroupLayout->addWidget(numTime, 0, Qt::AlignRight);
 
+            QWidget* buttonContainer = new QWidget();
+            QHBoxLayout* buttonContainerLayout = new QHBoxLayout();
+            buttonContainer->setLayout(buttonContainerLayout);
+
+
+            QPushButton* backButton = new QPushButton("< Back");
+            buttonContainerLayout->addWidget(backButton, 0, Qt::AlignLeft);
+            backButton->connect(backButton, &QPushButton::released, this, &TaskCreationWindowUI::backPage);
+
+            hourCheckBox->connect(hourCheckBox, &QCheckBox::stateChanged, this, &TaskCreationWindowUI::disableSecondCheckBox);
+            secondCheckBox->connect(secondCheckBox, &QCheckBox::stateChanged, this, &TaskCreationWindowUI::disableHourCheckBox);
+
+            QPushButton* finishButton = new QPushButton("Finish");
+            buttonContainerLayout->addWidget(finishButton, 0, Qt::AlignRight);
+            timerGroupLayout->addWidget(buttonContainer);
         }
 
         void nextPage(){
@@ -298,6 +321,35 @@ class TaskCreationWindowUI : public QWidget{
             widgets->show();
         }
 
+        void backPage(){
+            widgets->setCurrentWidget(taskCreationWindowWidget);
+            widgets->show();
+        }
+
+        void disableSecondCheckBox(int value){
+            if(value && secondCheckBox->isChecked()){
+                secondCheckBox->setChecked(false);
+            }
+        }
+
+        void disableHourCheckBox(int value){
+            if(value && hourCheckBox->isChecked()){
+                hourCheckBox->setChecked(false);
+            }
+        }
+
+        void setDate(QDate date){
+            if(toChangeStartDate && date < endDateEdit->date()){
+                startDateEdit->setReadOnly(false);
+                startDateEdit->setDate(date);
+                toChangeStartDate = false;
+                startDateEdit->setReadOnly(true);
+            }
+            else if(!toChangeStartDate && date > startDateEdit->date()){
+                endDateEdit->setDate(date);
+                toChangeStartDate = true;
+            }
+        }
 };
 
 #endif // TASKCREATIONWINDOWUI_H
