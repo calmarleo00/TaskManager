@@ -2,22 +2,32 @@ TEMPLATE = app
 TARGET = TiCareAppTest
 
 QT = core gui
+QT += sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 SOURCES += \
-    MainWindow.cpp \
+    AppController.cpp \
     MainWindowUI.cpp \
+    Schedule.cpp \
     Task.cpp \
     Task2.cpp \
-    TaskCreationWindow.cpp \
+    TaskCreationAttributeUI.cpp \
+    TaskCreationWindowUI.cpp \
+    TaskRepeatableSchedulingUIBuilder.cpp \
     main.cpp
 
 HEADERS += \
-    MainWindow.h \
+    AppController.h \
     MainWindowUI.h \
+    Schedule.h \
     Task.h \
-    TaskCreationWindowUI.h
+    TaskCreationAttributeUI.h \
+    TaskCreationSchedulingUIBuilder.h \
+    TaskCreationSchedulingUIDirector.h \
+    TaskCreationWindowUI.h \
+    TaskFixedSchedulingUIBuilder.h \
+    TaskRepeatableSchedulingUIBuilder.h
 
 
 
