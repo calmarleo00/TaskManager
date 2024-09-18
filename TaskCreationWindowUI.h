@@ -1,5 +1,3 @@
-#include "qcheckbox.h"
-#include "qstackedwidget.h"
 #include <QWidget>
 #include <QGridLayout>
 #include <QScrollArea>
@@ -12,42 +10,30 @@
 #include <QSplitter>
 #include <QSizeGrip>
 #include <QRect>
-#include <TaskCreationAttributeUI.h>
+#include <TaskAttributeUI.h>
 #include <TaskCreationSchedulingUIBuilder.h>
 #include <TaskFixedSchedulingUIBuilder.h>
 #include <TaskCreationSchedulingUIDirector.h>
-#include <TaskRepeatableSchedulingUIBuilder.h>
+#include <TaskWindowUI.h>
 #include <AppController.h>
 
 #ifndef TASKCREATIONWINDOWUI_H
 #define TASKCREATIONWINDOWUI_H
-class TaskCreationWindowUI : public QWidget{
+class TaskCreationWindowUI : public TaskWindowUI{
     Q_OBJECT
-    TaskCreationAttributeUI* firstWindow;
-    QWidget* schedulingSelectionWidget;
-    TaskCreationSchedulingUIDirector* secondWindowDirector;
-    QStackedWidget* stackedWindows = nullptr;
-    QCheckBox* repeatableSelection;
-    QCheckBox* fixedSelection;
-    QString taskName;
-    QString taskDescription;
-
     public:
         TaskCreationWindowUI(){
             stackedWindows = new QStackedWidget();
         }
     public:
-        void setupTaskCreationWidgetsUI();
+        void setupTaskWidgetsUI() override;
 
     private slots:
-        void backAttributeSelectionPage();
-        void backSchedulingSelectionPage();
-        void nextSchedulingSelectionPage(QGridLayout* attributesGrid, bool isExternal);
-        void nextSchedulePage();
-        void closeWindow(QHBoxLayout* dateContainerLayout, QHBoxLayout* daysLayout, QHBoxLayout* hoursGroupLayout, QVBoxLayout* checkBoxLayout);
-
-    signals:
-        void signalAddNewTaskToMainWindowUI(QString taskName, QString taskDescription);
+        void backAttributeSelectionPage() override;
+        void backSchedulingSelectionPage() override;
+        void nextSchedulingSelectionPage(QGridLayout* attributesGrid, bool isExternal) override;
+        void nextSchedulePage() override;
+        void closeWindow(QHBoxLayout* dateContainerLayout, QHBoxLayout* daysLayout, QVBoxLayout* checkBoxLayout, QHBoxLayout* startTimeContainerLayout, QHBoxLayout* repeatableContainerLayout) override;
 };
 
 #endif // TASKCREATIONWINDOWUI_H

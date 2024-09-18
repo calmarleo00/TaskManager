@@ -15,11 +15,12 @@ class AppController : public QWidget{
     AppController(){};
     virtual ~AppController(){};
 
-    void createNewTask(QGridLayout* attributesGrid, bool isExternal);
+    Task* createNewTask(QString taskName, bool isExternal);
+    void setTaskAttributes(QGridLayout* attributesGrid, bool isExternal);
     void saveTaskToDatabase();
-    void setTaskRepeatableScheduleValues(QHBoxLayout* dateContainerLayout, QHBoxLayout* daysLayout, QHBoxLayout* hoursGroupLayout, QVBoxLayout* checkBoxLayout);
-    public slots:
-        void addNewTask(Task* newTask);
+    void setTaskRepeatableScheduleValues(QHBoxLayout* dateContainerLayout, QHBoxLayout* daysLayout, QVBoxLayout* checkBoxLayout, QHBoxLayout* startTimeContainerLayout, QHBoxLayout* repeatableContainerLayout);
+    void callAddTaskToSchedule();
+    void deleteTask(QString taskName);
 
     static AppController* getInstance();
 };

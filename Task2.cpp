@@ -2,15 +2,11 @@
 #include <QFile>
 #include <QDebug>
 class Task2 : public Task {
-    Q_OBJECT
-    QString filePath;
 public:
-    Task2(QString filePath){
-        this->filePath = filePath;
-    }
+    Task2(){}
 
-private slots:
-    void execute() {
+    void execute() override{
+        QString filePath = parameters["filePath"].toString();
         if (!QFile::exists(filePath)) {
             qDebug().noquote() << "File not found:" << filePath;
         }

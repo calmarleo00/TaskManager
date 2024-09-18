@@ -1,5 +1,13 @@
 #include <Schedule.h>
 
+int Schedule::getDay(){
+    return this->day;
+}
+
+void Schedule::setDay(int day){
+    this->day = day;
+}
+
 bool Schedule::getIsRepeatable(){
     return this->isRepeatable;
 }
@@ -25,9 +33,9 @@ Schedule::Time* Schedule::getStartTime(){
 void Schedule::setStartTime(Time* startTime){
     this->startTime = startTime;
 }
-Schedule::Time* Schedule::getEndTime(){
-    return this->endTime;
+Schedule::Time* Schedule::getIterTime(){
+    return this->iterTime;
 }
-void Schedule::setEndTime(Time* endTime){
-    this->endTime = endTime;
+void Schedule::setIterTime(Time* iterTime){
+    this->iterTime = iterTime;
 }

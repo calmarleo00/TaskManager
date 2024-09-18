@@ -64,7 +64,7 @@ void TaskRepeatableSchedulingUIBuilder::buildCalendarStep() {
     dateContainerLayout->addWidget(endDateEdit, 0, Qt::AlignRight);
 }
 
-void TaskRepeatableSchedulingUIBuilder::buildDaysStep() {
+/*void TaskRepeatableSchedulingUIBuilder::buildDaysStep() {
     // Create a group box for days selection
     QGroupBox* daysGroupBox = new QGroupBox("Days Selection");
     daysLayout = new QHBoxLayout();
@@ -77,12 +77,12 @@ void TaskRepeatableSchedulingUIBuilder::buildDaysStep() {
         daysCheckBoxes[i].setParent(daysGroupBox);
         daysLayout->addWidget(&daysCheckBoxes[i]);
     }
-}
+}*/
 
 void TaskRepeatableSchedulingUIBuilder::buildTimeStep() {
     // Create a group box for time selection
     QGroupBox* hoursGroupBox = new QGroupBox("Time Selection");
-    hoursGroupLayout = new QHBoxLayout();
+    QHBoxLayout* hoursGroupLayout = new QHBoxLayout();
     hoursGroupBox->setLayout(hoursGroupLayout);
     scheduleGroupLayout->addWidget(hoursGroupBox);
 
@@ -96,13 +96,35 @@ void TaskRepeatableSchedulingUIBuilder::buildTimeStep() {
     secondCheckBox = new QCheckBox("Seconds");
     checkBoxLayout->addWidget(hourCheckBox);
     checkBoxLayout->addWidget(secondCheckBox);
-    hoursGroupLayout->addWidget(checkBoxContainer, 0, Qt::AlignLeft);
+    hoursGroupLayout->addWidget(checkBoxContainer, 0, Qt::AlignLeft | Qt::AlignHCenter);
 
     connect(hourCheckBox, &QCheckBox::stateChanged, this, &TaskRepeatableSchedulingUIBuilder::disableSecondCheckBox);
     connect(secondCheckBox, &QCheckBox::stateChanged, this, &TaskRepeatableSchedulingUIBuilder::disableHourCheckBox);
 
+    QWidget* timeScheduleInformationContainer = new QWidget();
+    QVBoxLayout* timeScheduleInformationContainerLayout = new QVBoxLayout();
+    timeScheduleInformationContainer->setLayout(timeScheduleInformationContainerLayout);
+
+    QWidget* startTimeContainer = new QWidget();
+    startTimeContainerLayout = new QHBoxLayout();
+    startTimeContainer->setLayout(startTimeContainerLayout);
+
+    QLabel* selectStartTime = new QLabel("Select start time:");
+    QTimeEdit* startTime = new QTimeEdit();
+    startTimeContainerLayout->addWidget(selectStartTime, 0, Qt::AlignLeft);
+    startTimeContainerLayout->addWidget(startTime, 0, Qt::AlignRight);
+    timeScheduleInformationContainerLayout->addWidget(startTimeContainer);
+
+    QWidget* repeatableContainer = new QWidget();
+    repeatableContainerLayout = new QHBoxLayout();
+    repeatableContainer->setLayout(repeatableContainerLayout);
+
+    QLabel* selectRepeatable = new QLabel("How often to repeat:");
     QSpinBox* numTime = new QSpinBox();
-    hoursGroupLayout->addWidget(numTime, 0, Qt::AlignRight);
+    repeatableContainerLayout->addWidget(selectRepeatable, 0, Qt::AlignLeft);
+    repeatableContainerLayout->addWidget(numTime, 0, Qt::AlignRight);
+    timeScheduleInformationContainerLayout->addWidget(repeatableContainer);
+    hoursGroupLayout->addWidget(timeScheduleInformationContainer, 0, Qt::AlignRight | Qt::AlignHCenter);
 }
 
 void TaskRepeatableSchedulingUIBuilder::buttonStep() {
@@ -154,5 +176,5 @@ void TaskRepeatableSchedulingUIBuilder::emitBackSchedulingSelectionSignal() {
 }
 
 void TaskRepeatableSchedulingUIBuilder::emitClosePageSignal() {
-    emit closePageSignal(dateContainerLayout, daysLayout, hoursGroupLayout, checkBoxLayout);
+    emit closePageSignal(dateContainerLayout, daysLayout, checkBoxLayout, startTimeContainerLayout, repeatableContainerLayout);
 }

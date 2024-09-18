@@ -1,5 +1,5 @@
-#ifndef TASKCREATIONATTRIBUTEUI_H
-#define TASKCREATIONATTRIBUTEUI_H
+#ifndef TASKATTRIBUTEUI_H
+#define TASKATTRIBUTEUI_H
 #include "qcheckbox.h"
 #include "qcombobox.h"
 #include "qgridlayout.h"
@@ -19,7 +19,9 @@ class TaskCreationAttributeUI : public QWidget{
         TaskCreationAttributeUI(){
             taskAttributeWindowWidget = new QWidget();
         }
-        void setupTaskCreationUI();
+        void setupTaskAttributeCreationUI();
+        void setupTaskAttributeUpdateUI();
+
         QWidget* getTaskAttributeWindowWidget();
     private:
     /* Function that adds the default attributes (name - description) of the task */
@@ -45,4 +47,4 @@ class TaskCreationAttributeUI : public QWidget{
 
 };
 
-#endif // TASKCREATIONATTRIBUTEUI_H
+#endif // TASKATTRIBUTEUI_H

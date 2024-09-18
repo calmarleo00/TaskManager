@@ -20,9 +20,10 @@ protected:
     QVBoxLayout* scheduleGroupLayout;
     QCheckBox* daysCheckBoxes;
     QVBoxLayout* checkBoxLayout;
-    QHBoxLayout* hoursGroupLayout;
     QHBoxLayout* daysLayout;
     QHBoxLayout* dateContainerLayout;
+    QHBoxLayout* startTimeContainerLayout;
+    QHBoxLayout* repeatableContainerLayout;
 
 public:
     TaskRepeatableSchedulingUIBuilder();
@@ -30,7 +31,7 @@ public:
     void reset() override;
     void initializeWindowStep() override;
     void buildCalendarStep() override;
-    void buildDaysStep() override;
+    void buildDaysStep() override {};
     void buildTimeStep() override;
     void buttonStep() override;
 

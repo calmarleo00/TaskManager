@@ -11,7 +11,6 @@ void databaseInitialization(){
     db.setPort(3306);
     db.setDatabaseName("ticare");
     db.setUserName("root");
-
     if(db.open()){
         QSqlQuery query(db);
         query.exec("CREATE TABLE IF NOT EXISTS Task "

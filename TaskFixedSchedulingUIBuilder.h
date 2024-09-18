@@ -14,7 +14,7 @@ class TaskFixedSchedulingUIBuilder : public TaskCreationSchedulingUIBuilder{
         }
 
         void emitClosePageSignal(){
-            emit closePageSignal(NULL, NULL, NULL, NULL);
+            emit closePageSignal(NULL, NULL, NULL, NULL, NULL);
         }
 };
 

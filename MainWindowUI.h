@@ -23,7 +23,7 @@ class MainWindowUI: public QWidget{
         static MainWindowUI* getInstance();
         void setupMainWindowUI();
         void addNewTaskToMainWindowUI(QString taskName, QString taskDescrption);
-
+        void deleteTaskFromMainWindowUI();
     private slots:
         void openNewTaskCreationWindowUI();
 };

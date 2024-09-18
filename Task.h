@@ -9,15 +9,16 @@
 #include <Schedule.h>
 class Task: public QObject{
     Q_OBJECT
-    QString name;
-    QString description;
-    bool isExternal;
-    QString command;
-    QJsonObject parameters;
-    QDate startDate;
-    QDate endDate;
-    Schedule** scheduling = new Schedule*[7];
-    Task* nextTask;
+    protected:
+        QString name;
+        QString description;
+        bool isExternal;
+        QString command;
+        QJsonObject parameters;
+        QDate startDate;
+        QDate endDate;
+        Schedule** scheduling = new Schedule*[7];
+        Task* nextTask;
 
     public:
         Task();
@@ -38,7 +39,7 @@ class Task: public QObject{
         void setStartDate(QDate startDate);
         QDate getEndDate();
         void setEndDate(QDate endDate);
-        void execute();
+        virtual void execute() {};
         Schedule** getScheduling();
 };
 

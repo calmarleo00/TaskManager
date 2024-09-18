@@ -1,5 +1,3 @@
-#include "qsqldatabase.h"
-#include "qsqlquery.h"
 #include <TaskCreationWindowUI.h>
 #include <MainWindowUI.h>
 #include <AppController.h>
@@ -7,7 +5,7 @@
 #include <QSqlError>
 
 
-void TaskCreationWindowUI::setupTaskCreationWidgetsUI(){
+void TaskCreationWindowUI::setupTaskWidgetsUI(){
     firstWindow = new TaskCreationAttributeUI();
     firstWindow->setupTaskCreationUI();
     stackedWindows->addWidget(firstWindow->getTaskAttributeWindowWidget());
@@ -60,7 +58,7 @@ void TaskCreationWindowUI::backSchedulingSelectionPage(){
 void TaskCreationWindowUI::nextSchedulingSelectionPage(QGridLayout* attributesGrid, bool isExternal){
     taskName = qobject_cast<QTextEdit*>(attributesGrid->itemAt(2)->widget())->toPlainText();
     taskDescription = qobject_cast<QTextEdit*>(attributesGrid->itemAt(5)->widget())->toPlainText();
-    AppController::getInstance()->createNewTask(attributesGrid, isExternal);
+    AppController::getInstance()->setTaskAttributes(attributesGrid, isExternal);
     stackedWindows->setMaximumSize(schedulingSelectionWidget->maximumWidth(), schedulingSelectionWidget->maximumHeight());
     stackedWindows->setCurrentWidget(schedulingSelectionWidget);
 }
@@ -87,9 +85,10 @@ void TaskCreationWindowUI::TaskCreationWindowUI::nextSchedulePage(){
 
 }
 
-void TaskCreationWindowUI::closeWindow(QHBoxLayout* dateContainerLayout, QHBoxLayout* daysLayout, QHBoxLayout* hoursGroupLayout, QVBoxLayout* checkBoxLayout){
-    AppController::getInstance()->setTaskRepeatableScheduleValues(dateContainerLayout, daysLayout, hoursGroupLayout, checkBoxLayout);
+void TaskCreationWindowUI::closeWindow(QHBoxLayout* dateContainerLayout, QHBoxLayout* daysLayout, QVBoxLayout* checkBoxLayout, QHBoxLayout* startTimeContainerLayout, QHBoxLayout* repeatableContainerLayout){
+    AppController::getInstance()->setTaskRepeatableScheduleValues(dateContainerLayout, daysLayout, checkBoxLayout, startTimeContainerLayout, repeatableContainerLayout);
     AppController::getInstance()->saveTaskToDatabase();
+    AppController::getInstance()->callAddTaskToSchedule();
     stackedWindows->close();
     emit signalAddNewTaskToMainWindowUI(taskName, taskDescription);
 }

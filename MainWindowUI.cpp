@@ -33,7 +33,7 @@ void MainWindowUI::setupMainWindowUI(){
     // Create two button at the bottom of the window, one for task creation the other for task deletion
     QPushButton* newTaskButton = new QPushButton("Create a new task");
     QPushButton* deleteTaskButton = new QPushButton("Delete selected tasks");
-
+    deleteTaskButton->connect(deleteTaskButton, &QPushButton::released, this, &MainWindowUI::deleteTaskFromMainWindowUI);
     gridMainWindowLayout->addWidget(newTaskButton, 0, 0, 1, 1);
     gridMainWindowLayout->addWidget(deleteTaskButton, 0, 2, 1, 1);
 
@@ -58,6 +58,7 @@ void MainWindowUI::addNewTaskToMainWindowUI(QString taskName, QString taskDescri
     QVBoxLayout* taskInformationGroupLayout = new QVBoxLayout();
     taskInformationGroup->setLayout(taskInformationGroupLayout);
     taskInformationGroup->setCheckable(true);
+    taskInformationGroup->setChecked(false);
 
     QLabel* nameLabel = new QLabel(taskName);
     QLabel* descriptionLabel = new QLabel(taskDescription);
@@ -75,4 +76,40 @@ void MainWindowUI::addNewTaskToMainWindowUI(QString taskName, QString taskDescri
     mainWindowUI->gridTaskMainWindowLayout->addWidget(taskInformationGroup, 0, col, 1, 1);
     mainWindowUI->gridTaskMainWindowLayout->setColumnMinimumWidth(col, 220);
     col += 1;
+}
+
+void MainWindowUI::deleteTaskFromMainWindowUI(){
+    struct ListGroupBoxToDelete{
+        QGroupBox* taskGroupBox;
+        ListGroupBoxToDelete* nextTaskGroupBox;
+        ListGroupBoxToDelete(QGroupBox* taskGroupBox){
+            this->taskGroupBox = taskGroupBox;
+            this->nextTaskGroupBox = nullptr;
+        }
+    };
+    ListGroupBoxToDelete* headList = nullptr;
+    ListGroupBoxToDelete* tailList = nullptr;
+    for(int i = 0; i < this->gridTaskMainWindowLayout->count(); i++){
+        QGroupBox* groupBox = qobject_cast<QGroupBox*>(this->gridTaskMainWindowLayout->itemAt(i)->widget());
+        if(groupBox->isChecked()){
+            AppController::getInstance()->deleteTask(qobject_cast<QLabel*>(groupBox->layout()->itemAt(0)->widget())->text());
+            if(headList){
+                tailList->nextTaskGroupBox = new ListGroupBoxToDelete(groupBox);
+                tailList = tailList->nextTaskGroupBox;
+            }
+            else{
+                headList = new ListGroupBoxToDelete(groupBox);
+                tailList = headList;
+            }
+        }
+    }
+    tailList = headList;
+    while(tailList){
+        tailList->taskGroupBox->deleteLater();
+        this->gridTaskMainWindowLayout->removeWidget(tailList->taskGroupBox);
+        tailList = tailList->nextTaskGroupBox;
+    }
+
+    delete headList;
+    delete tailList;
 }

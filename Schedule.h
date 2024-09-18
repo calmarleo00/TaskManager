@@ -5,7 +5,7 @@ class Schedule{
     public:
         struct Time{
             QTime time;
-            QTime* nextTime;
+            Time* nextTime;
             Time(QTime time){
                 this->time = time;
                 nextTime = nullptr;
@@ -17,7 +17,7 @@ class Schedule{
         int repeatableHours;
         int repeatableSeconds;
         Time* startTime;
-        Time* endTime;
+        Time* iterTime;
 
     public:
         Schedule(){
@@ -28,7 +28,7 @@ class Schedule{
         }
 
         int getDay();
-        void setDay();
+        void setDay(int day);
         bool getIsRepeatable();
         void setIsRepeatable(bool isRepeatable);
         int getRepeatableHours();
@@ -37,8 +37,8 @@ class Schedule{
         void setRepeatableSeconds(int repeatableSeconds);
         Time* getStartTime();
         void setStartTime(Time* startTime);
-        Time* getEndTime();
-        void setEndTime(Time* endTime);
+        Time* getIterTime();
+        void setIterTime(Time* iterTime);
 
 };
 

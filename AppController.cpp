@@ -8,8 +8,9 @@
 #include "qsqlerror.h"
 #include "qsqlquery.h"
 #include "qtextedit.h"
-#include<AppController.h>
-
+#include <AppController.h>
+#include <Scheduler.h>
+#include <Task2.cpp>
 AppController* AppController::instance = nullptr;
 
 
@@ -20,8 +21,22 @@ AppController* AppController::getInstance() {
     return instance;
 }
 
-void AppController::createNewTask(QGridLayout* attributesGrid, bool isExternal){
-    Task* newTask = new Task();
+
+Task* AppController::createNewTask(QString taskName, bool isExternal){
+    Task* newTask = nullptr;
+    if(isExternal){
+        newTask = new Task();
+    }
+    else{
+        if(taskName == "Task2"){
+            newTask = new Task2();
+        }
+    }
+    return newTask;
+}
+
+void AppController::setTaskAttributes(QGridLayout* attributesGrid, bool isExternal){
+    Task* newTask = createNewTask(qobject_cast<QTextEdit*>(attributesGrid->itemAt(2)->widget())->toPlainText(), isExternal);
 
     // Update in-memory data structure, keeping references of all the existent tasks
     if(taskHead){
@@ -69,24 +84,42 @@ void AppController::createNewTask(QGridLayout* attributesGrid, bool isExternal){
 }
 
 
-void AppController::setTaskRepeatableScheduleValues(QHBoxLayout* dateContainerLayout, QHBoxLayout* daysLayout, QHBoxLayout* hoursGroupLayout, QVBoxLayout* checkBoxLayout){
-    taskTail->setStartDate(qobject_cast<QDateEdit*>(dateContainerLayout->itemAt(1)->widget())->date());
+void AppController::setTaskRepeatableScheduleValues(QHBoxLayout* dateContainerLayout, QHBoxLayout* daysLayout, QVBoxLayout* checkBoxLayout, QHBoxLayout* startTimeContainerLayout, QHBoxLayout* repeatableContainerLayout){
+    QDate startDate = qobject_cast<QDateEdit*>(dateContainerLayout->itemAt(1)->widget())->date();
+    int day = startDate.dayOfWeek() - 1;
+    taskTail->setStartDate(startDate);
     taskTail->setEndDate(qobject_cast<QDateEdit*>(dateContainerLayout->itemAt(3)->widget())->date());
+    taskTail->getScheduling()[day]->setStartTime(new Schedule::Time(qobject_cast<QTimeEdit*>(startTimeContainerLayout->itemAt(1)->widget())->time()));
+    taskTail->getScheduling()[day]->setIterTime(taskTail->getScheduling()[day]->getStartTime());
+    taskTail->getScheduling()[day]->setDay(day);
     for(int i = 0; i < 7; i++){
+
+        taskTail->getScheduling()[i]->setIsRepeatable(true);
+        if(qobject_cast<QCheckBox*>(checkBoxLayout->itemAt(0)->widget())->isChecked()){
+            taskTail->getScheduling()[i]->setRepeatableHours(qobject_cast<QSpinBox*>(repeatableContainerLayout->itemAt(1)->widget())->value());
+        }
+        else{
+            taskTail->getScheduling()[i]->setRepeatableSeconds(qobject_cast<QSpinBox*>(repeatableContainerLayout->itemAt(1)->widget())->value());
+        }
+    }
+    /*for(int i = 0; i < 7; i++){
         QCheckBox* dayCheckBox = qobject_cast<QCheckBox*>(daysLayout->itemAt(i)->widget());
         if(dayCheckBox->isChecked()){
             taskTail->getScheduling()[i]->setIsRepeatable(true);
+            taskTail->getScheduling()[i]->setStartTime(new Schedule::Time(qobject_cast<QTimeEdit*>(startTimeContainerLayout->itemAt(1)->widget())->time()));
+            taskTail->getScheduling()[i]->setIterTime(taskTail->getScheduling()[i]->getStartTime());
+            qDebug() << taskTail->getScheduling()[i]->getIterTime();
             if(qobject_cast<QCheckBox*>(checkBoxLayout->itemAt(0)->widget())->isChecked()){
-                taskTail->getScheduling()[i]->setRepeatableHours(qobject_cast<QSpinBox*>(hoursGroupLayout->itemAt(1)->widget())->value());
+                taskTail->getScheduling()[i]->setRepeatableHours(qobject_cast<QSpinBox*>(repeatableContainerLayout->itemAt(1)->widget())->value());
             }
             else{
-                taskTail->getScheduling()[i]->setRepeatableSeconds(qobject_cast<QSpinBox*>(hoursGroupLayout->itemAt(1)->widget())->value());
+                taskTail->getScheduling()[i]->setRepeatableSeconds(qobject_cast<QSpinBox*>(repeatableContainerLayout->itemAt(1)->widget())->value());
             }
         }
         else{
             taskTail->getScheduling()[i] = nullptr;
         }
-    }
+    }*/
 }
 
 
@@ -106,21 +139,64 @@ void AppController::saveTaskToDatabase(){
         query.bindValue("command", taskTail->getTaskCommand());
         query.bindValue(":startDate", taskTail->getStartDate());
         query.bindValue(":endDate", taskTail->getEndDate());
+        query.exec();
         query.clear();
 
+
         Schedule** schedule = taskTail->getScheduling();
+        QVariant scheduleId = 0;
+
         for(int i = 0; i < 7; i++){
-            if(schedule[i]){
+            if(schedule[i] && schedule[i]->getDay() != -1){
                 query.prepare("INSERT INTO Schedule (taskId, day, isRepeatable, repeatableHours, repeatableSeconds) VALUE (:taskId, :day, :isRepeatable, :repeatableHours, :repeatableSeconds);");
                 query.bindValue(":taskId", taskTail->getTaskName());
                 query.bindValue(":day", i + 1);
                 query.bindValue(":isRepeatable", true);
                 query.bindValue(":repeatableHours", schedule[i]->getRepeatableHours());
                 query.bindValue(":repeatableSeconds", schedule[i]->getRepeatableSeconds());
+                query.exec();
+                scheduleId = query.lastInsertId();
                 query.clear();
+
+                query.prepare("INSERT INTO Time (scheduleId, time) VALUE (:scheduleId, :time);");
+                query.bindValue(":scheduleId", scheduleId.value<int>());
+                query.bindValue(":time", schedule[i]->getStartTime()->time);
+                query.exec();
             }
         }
     }
+}
 
+void AppController::deleteTask(QString taskName){
+    Scheduler::getInstance()->removeTaskFromQueue(taskName);
+    if(taskHead->getTaskName() == taskName){
+        Task* taskHeadTmpPtr = taskHead->getTaskNext();
+        delete taskHead;
+        taskHead = taskHeadTmpPtr;
+    }
+    else{
+        Task* iterFirstTask = taskHead;
+        Task* iterSecondTask = taskHead->getTaskNext();
+        while(iterSecondTask){
+            if(iterSecondTask->getTaskName() == taskName){
+                iterFirstTask->setTaskNext(iterSecondTask->getTaskNext());
+                delete iterSecondTask;
+                break;
+            }
+            iterFirstTask = iterSecondTask;
+            iterSecondTask = iterSecondTask->getTaskNext();
+        }
+    }
+    QSqlDatabase db = QSqlDatabase::database("ticare_connection");
+    if(db.open()){
+        QSqlQuery query(db);
+        query.prepare("DELETE FROM Task WHERE id = :name");
+        query.bindValue(":name", taskName);
+        query.exec();
+    }
+}
+
+void AppController::callAddTaskToSchedule(){
+    Scheduler::getInstance()->addTaskToQueue(taskTail);
 }
 

@@ -5,7 +5,7 @@
 #include "qscrollarea.h"
 #include "qspinbox.h"
 #include "qtextedit.h"
-#include <TaskCreationAttributeUI.h>
+#include <TaskAttributeUI.h>
 
 void TaskCreationAttributeUI::setupTaskCreationUI(){
     // Set minimum and maximum size of the window

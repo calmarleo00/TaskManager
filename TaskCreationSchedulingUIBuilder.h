@@ -27,7 +27,7 @@ class TaskCreationSchedulingUIBuilder : public QWidget{
 
     signals:
         void backPageSignal();
-        void closePageSignal(QHBoxLayout* dateContainerLayout, QHBoxLayout* daysLayout, QHBoxLayout* hoursGroupLayout, QVBoxLayout* checkBoxLayout);
+        void closePageSignal(QHBoxLayout* dateContainerLayout, QHBoxLayout* daysLayout, QVBoxLayout* checkBoxLayout, QHBoxLayout* startTimeContainerLayout, QHBoxLayout* repeatableContainerLayout);
 };
 
 #endif // TASKCREATIONSCHEDULINGUIBUILDER_H
