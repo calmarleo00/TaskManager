@@ -4,7 +4,7 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
-
+#include <TrayIconMenu.h>
 void databaseInitialization(){
     QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL", "ticare_connection");
     db.setHostName("localhost");
@@ -17,6 +17,7 @@ void databaseInitialization(){
                     "(id VARCHAR(255) PRIMARY KEY, "
                     "description TEXT, "
                     "isExternal BOOLEAN NOT NULL DEFAULT FALSE, "
+                    "isRepeatable BOOLEAN DEFAULT FALSE, "
                     "command VARCHAR(255), "
                     "parameters JSON, "
                     "startDate DATE, "
@@ -25,7 +26,6 @@ void databaseInitialization(){
                     "(id INT AUTO_INCREMENT PRIMARY KEY, "
                     "taskId VARCHAR(255), "
                     "day ENUM('0', '1', '2', '3', '4', '5', '6') NOT NULL, "
-                    "isRepeatable BOOLEAN DEFAULT FALSE, "
                     "repeatableHours INT DEFAULT -1, "
                     "repeatableSeconds INT DEFAULT -1, "
                    "FOREIGN KEY (taskId) REFERENCES Task(id) ON DELETE CASCADE);");
@@ -45,6 +45,39 @@ int main(int argc, char **argv)
     // Setup the main window UI
     MainWindowUI* mainWindowUI = MainWindowUI::getInstance();
     mainWindowUI->setupMainWindowUI();
+
+    trayIcon.setToolTip("Task Scheduler");
+
+    QRect screenGeometry = QGuiApplication::primaryScreen()->geometry();
+
+    // Calculate the position for the bottom-right corner
+    TrayIconMenu *trayMenu = TrayIconMenu::getInstance();
+    trayMenu->setFixedSize(250, 400);
+
+    int screenWidth = screenGeometry.width();
+    int screenHeight = screenGeometry.height();
+
+    // Get widget size
+    int widgetWidth = trayMenu->geometry().width();
+    int widgetHeight = trayMenu->geometry().height();
+
+    // Calculate x, y for bottom right corner
+    int x = screenWidth - widgetWidth;
+    int y = screenHeight - widgetHeight;
+
+    // Show the menu at the calculated position
+    trayMenu->move(x, y);
+
+    trayMenu->setGeometry(trayIcon.geometry());
+    QMenu *trayMenuContext = new QMenu();
+    QAction *showAction = trayMenuContext->addAction("Show Tasks");
+    QObject::connect(showAction, &QAction::triggered, [trayMenu] {
+        trayMenu->show();
+    });
+
+    trayIcon.setContextMenu(trayMenuContext);
+    trayIcon.show();
+
     return app.exec();
 }
 

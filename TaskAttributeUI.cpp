@@ -6,11 +6,11 @@
 #include "qspinbox.h"
 #include "qtextedit.h"
 #include <TaskAttributeUI.h>
-
-void TaskCreationAttributeUI::setupTaskCreationUI(){
+#include <AppController.h>
+void TaskAttributeUI::setupTaskAttributeCreationUI(){
     // Set minimum and maximum size of the window
-    taskAttributeWindowWidget->setMinimumSize(400, 300);
-    taskAttributeWindowWidget->setMaximumSize(550, 400);
+    taskAttributeWindowWidget->setMinimumSize(500, 300);
+    taskAttributeWindowWidget->setMaximumSize(600, 400);
 
     // Set the layout and let it align everything at the top
     QVBoxLayout* taskAttributeWindowLayout = new QVBoxLayout();
@@ -58,32 +58,29 @@ void TaskCreationAttributeUI::setupTaskCreationUI(){
     buttonGrid->addWidget(isExternal, 0, 0, Qt::AlignLeft);
     isExternal->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     // If activated allow the user only to insert a command line instruction
-    isExternal->connect(isExternal, &QCheckBox::stateChanged, this, &TaskCreationAttributeUI::disableAddition);
+    isExternal->connect(isExternal, &QCheckBox::stateChanged, this, &TaskAttributeUI::disableAddition);
 
     // Go to the next page
     QPushButton* nextPageButton = new QPushButton("Next >");
     nextPageButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    nextPageButton->connect(nextPageButton, &QPushButton::released, this, &TaskCreationAttributeUI::nextPageSave);
+    nextPageButton->connect(nextPageButton, &QPushButton::released, this, &TaskAttributeUI::nextPageSave);
     buttonGrid->addWidget(nextPageButton, 1, 4, Qt::AlignRight);
 
     addAttributeButton = new QPushButton("Add Attribute");
     buttonGrid->addWidget(addAttributeButton, 0, 4, Qt::AlignRight);
     addAttributeButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    addAttributeButton->connect(addAttributeButton, &QPushButton::released, this, &TaskCreationAttributeUI::addTaskAttribute);
-
+    addAttributeButton->connect(addAttributeButton, &QPushButton::released, this, &TaskAttributeUI::addTaskAttribute);
     // Add the default attributes to the grid
     addDefaultTaskAttribute("Name", "string");
     addDefaultTaskAttribute("Description", "string");
-
-
 }
 
 /* Function that adds the default attributes (name - description) of the task */
-void TaskCreationAttributeUI::addDefaultTaskAttribute(QString name, QString type){
+void TaskAttributeUI::addDefaultTaskAttribute(QString name, QString type){
     QLineEdit* attributeName = new QLineEdit(name);
     QComboBox* attributeType = new QComboBox();
     QTextEdit* valueTextEdit = new QTextEdit();
-
+    valueTextEdit->setMaximumSize(300, 200);
     attributeName->setReadOnly(true);
     attributeType->addItem(type);
 
@@ -97,13 +94,13 @@ void TaskCreationAttributeUI::addDefaultTaskAttribute(QString name, QString type
     row += 1;
 }
 
-void TaskCreationAttributeUI::nextPageSave(){
+void TaskAttributeUI::nextPageSave(){
     emit nextPage(attributesGrid, isExternal->isChecked());
 }
 
 
 /* Function that allows the user to define its own attributes */
-void TaskCreationAttributeUI::addTaskAttribute(){
+void TaskAttributeUI::addTaskAttribute(){
     QLineEdit* attributeName = new QLineEdit();
     QComboBox* attributeType = new QComboBox();
     QSpinBox* valueSpinBox = new QSpinBox();
@@ -113,7 +110,7 @@ void TaskCreationAttributeUI::addTaskAttribute(){
     attributeType->addItem("float");
 
     // Based on the type that are supported the value's box need to change
-    attributeType->connect(attributeType, &QComboBox::currentIndexChanged, this, [this, attributeType]{this->changeValue(attributeType);});
+    attributeType->connect(attributeType, &QComboBox::currentTextChanged, this, [this, attributeType]{this->changeValue(attributeType);});
 
     attributesGrid->addWidget(attributeName, row, 0, Qt::AlignLeft | Qt::AlignTop);
     attributesGrid->addWidget(attributeType, row, 1, Qt::AlignLeft | Qt::AlignTop);
@@ -129,7 +126,7 @@ void TaskCreationAttributeUI::addTaskAttribute(){
  * int -> QSpinBox
  * double -> QDoubleSpinBox
  * The comboBox argument is necessary to retrieve in which row the value's box needs to be changed */
-void TaskCreationAttributeUI::changeValue(QComboBox* comboBox) {
+void TaskAttributeUI::changeValue(QComboBox* comboBox) {
     int index = attributesGrid->indexOf(comboBox);
     int row = int(index / 3);
     // Add the new widget based on the current index
@@ -140,6 +137,7 @@ void TaskCreationAttributeUI::changeValue(QComboBox* comboBox) {
             attributesGrid->itemAt(index + 1)->widget()->deleteLater();
             attributesGrid->removeWidget(attributesGrid->itemAt(index + 1)->widget());
         }
+        valueTextEdit->setMaximumSize(300, 200);
         attributesGrid->addWidget(valueTextEdit, row, 2, Qt::AlignLeft | Qt::AlignTop);
     }
     else if(comboBox->currentText() == "int"){
@@ -162,19 +160,19 @@ void TaskCreationAttributeUI::changeValue(QComboBox* comboBox) {
 
 /* If the isExternal check box is flagged, then be sure to remove all the attributes inserted.
  * Then adds the new and only attribute needed: the text edit in which will be inserted the command line instruction */
-void TaskCreationAttributeUI::disableAddition(int state){
+void TaskAttributeUI::disableAddition(int state){
     if(state){
         addAttributeButton->setDisabled(true);
-        if(attributesGrid->rowCount() > 2){
+        if(row > 2){
             for(int i = 2; i < attributesGrid->rowCount(); i++){
                 attributesGrid->itemAt(i * 3)->widget()->deleteLater();
                 attributesGrid->removeWidget(attributesGrid->itemAt(i * 3)->widget());
 
-                attributesGrid->itemAt(i * 3 + 1)->widget()->deleteLater();
-                attributesGrid->removeWidget(attributesGrid->itemAt(i * 3 + 1)->widget());
+                attributesGrid->itemAt(i * 3)->widget()->deleteLater();
+                attributesGrid->removeWidget(attributesGrid->itemAt(i * 3)->widget());
 
-                attributesGrid->itemAt(i * 3 + 2)->widget()->deleteLater();
-                attributesGrid->removeWidget(attributesGrid->itemAt(i * 3 + 2)->widget());
+                attributesGrid->itemAt(i * 3)->widget()->deleteLater();
+                attributesGrid->removeWidget(attributesGrid->itemAt(i * 3)->widget());
             }
         }
 
@@ -191,10 +189,38 @@ void TaskCreationAttributeUI::disableAddition(int state){
         attributesGrid->setRowMinimumHeight(row, 50);
     }
     else{
+        qDebug() << attributesGrid->count();
+        attributesGrid->itemAt(row * 3)->widget()->deleteLater();
+        attributesGrid->removeWidget(attributesGrid->itemAt(row * 3)->widget());
+
+        attributesGrid->itemAt(row * 3)->widget()->deleteLater();
+        attributesGrid->removeWidget(attributesGrid->itemAt(row * 3)->widget());
+
+        attributesGrid->itemAt(row * 3)->widget()->deleteLater();
+        attributesGrid->removeWidget(attributesGrid->itemAt(row * 3)->widget());
+
         addAttributeButton->setDisabled(false);
     }
 }
 
-QWidget* TaskCreationAttributeUI::getTaskAttributeWindowWidget(){
+QWidget* TaskAttributeUI::getTaskAttributeWindowWidget(){
     return this->taskAttributeWindowWidget;
 }
+
+QGridLayout* TaskAttributeUI::getAttributesGrid(){
+    return this->attributesGrid;
+}
+
+int TaskAttributeUI::getAttributeRow(){
+    return this->row;
+}
+
+bool TaskAttributeUI::getIsExternal(){
+    return this->isExternal->isChecked();
+}
+
+void TaskAttributeUI::setIsExternal(bool isExternal){
+    this->isExternal->setChecked(isExternal);
+}
+
+

@@ -20,6 +20,7 @@
 #ifndef TASKCREATIONWINDOWUI_H
 #define TASKCREATIONWINDOWUI_H
 class TaskCreationWindowUI : public TaskWindowUI{
+
     Q_OBJECT
     public:
         TaskCreationWindowUI(){
@@ -27,13 +28,18 @@ class TaskCreationWindowUI : public TaskWindowUI{
         }
     public:
         void setupTaskWidgetsUI() override;
+        TaskAttributeUI* getFirstWindow() override;
+        QWidget* getSchedulingSelectionWidget() override;
+        TaskCreationSchedulingUIDirector* getSecondWindowDirector() override;
+        void nextSchedulePage() override;
+        QStackedWidget* getStackedWindows() override;
 
+    public slots:
     private slots:
         void backAttributeSelectionPage() override;
         void backSchedulingSelectionPage() override;
         void nextSchedulingSelectionPage(QGridLayout* attributesGrid, bool isExternal) override;
-        void nextSchedulePage() override;
-        void closeWindow(QHBoxLayout* dateContainerLayout, QHBoxLayout* daysLayout, QVBoxLayout* checkBoxLayout, QHBoxLayout* startTimeContainerLayout, QHBoxLayout* repeatableContainerLayout) override;
+        void closeWindow(QCheckBox* hourCheckBox, QCheckBox* secondCheckBox, QDateEdit* startDateEdit, QDateEdit* endDateEdit, QTimeEdit* startTime, QSpinBox* repeatableAmount) override;
 };
 
 #endif // TASKCREATIONWINDOWUI_H

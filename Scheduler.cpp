@@ -36,6 +36,8 @@ void Scheduler::updateTimerFirstTask(){
         timerFirstTask.setInterval(interval);
         timerFirstTask.start();
     }
+    QString str = QString::fromStdString(std::to_string(interval));
+    qDebug() << "Intervallo:" + str;
 }
 
 void Scheduler::addTaskToQueue(Task* task){
@@ -93,6 +95,8 @@ void Scheduler::addTaskToQueue(Task* task){
 
     TaskScheduleQueue* iterTaskQueue = headTaskQueue;
     while(iterTaskQueue){
+        qDebug() << iterTaskQueue->task->getTaskName();
+        task->getScheduling()[currentDay]->getStartTime();
         iterTaskQueue = iterTaskQueue->nextScheduleTask;
     }
 }
@@ -114,6 +118,7 @@ void Scheduler::populateTaskScheduleQueue(){
 
 void Scheduler::executeTask(){
     Task* task = headTaskQueue->task;
+    qDebug() << task->getIsExternal();
     if(task->getIsExternal()){
 
     }
@@ -136,7 +141,7 @@ void Scheduler::updateTaskSchedule(Task* task){
     else{
         nextDay = day + 1;
     }
-    if(task->getScheduling()[day]->getIsRepeatable()){
+    if(task->getIsRepeatable()){
         int mscsFromStartDay;
         if(task->getScheduling()[day]->getRepeatableHours() != -1){
             if((task->getScheduling()[day]->getIterTime()->time.msecsSinceStartOfDay()) +

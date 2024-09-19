@@ -13,6 +13,7 @@ class Task: public QObject{
         QString name;
         QString description;
         bool isExternal;
+        bool isRepeatable;
         QString command;
         QJsonObject parameters;
         QDate startDate;
@@ -29,6 +30,8 @@ class Task: public QObject{
         void setTaskDescription(QString description);
         bool getIsExternal();
         void setIsExternal(bool isExternal);
+        bool getIsRepeatable();
+        void setIsRepeatable(bool isRepeatable);
         QString getTaskCommand();
         void setTaskCommand(QString command);
         Task* getTaskNext();

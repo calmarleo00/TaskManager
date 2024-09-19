@@ -22,22 +22,34 @@ AppController* AppController::getInstance() {
 }
 
 
-Task* AppController::createNewTask(QString taskName, bool isExternal){
-    Task* newTask = nullptr;
-    if(isExternal){
-        newTask = new Task();
+void AppController::createNewTask(QGridLayout* attributesGrid, bool isExternal){
+    QString taskName = qobject_cast<QTextEdit*>(attributesGrid->itemAt(2)->widget())->toPlainText();
+    Task* newTask = taskHead;
+    bool taskAlreadyExist = false;
+    while(newTask && !taskAlreadyExist){
+        if(newTask->getTaskName() == taskName){
+            taskAlreadyExist = true;
+            break;
+        }
+        newTask = newTask->getTaskNext();
+    }
+    if(!taskAlreadyExist){
+        if(isExternal){
+            tmpTask = new Task();
+        }
+        else{
+            if(taskName == "Task2"){
+                tmpTask = new Task2();
+            }
+        }
+        setTaskAttributes(tmpTask, attributesGrid, isExternal);
     }
     else{
-        if(taskName == "Task2"){
-            newTask = new Task2();
-        }
+        // setTaskAttributes(newTask, attributesGrid, isExternal);
     }
-    return newTask;
 }
 
-void AppController::setTaskAttributes(QGridLayout* attributesGrid, bool isExternal){
-    Task* newTask = createNewTask(qobject_cast<QTextEdit*>(attributesGrid->itemAt(2)->widget())->toPlainText(), isExternal);
-
+void AppController::setTaskAttributes(Task* newTask, QGridLayout* attributesGrid, bool isExternal){
     // Update in-memory data structure, keeping references of all the existent tasks
     if(taskHead){
         taskTail->setTaskNext(newTask);
@@ -46,7 +58,6 @@ void AppController::setTaskAttributes(QGridLayout* attributesGrid, bool isExtern
     else{
         taskHead = newTask;
         taskTail = newTask;
-        taskIter = newTask;
     }
 
     // Set basic information
@@ -65,41 +76,46 @@ void AppController::setTaskAttributes(QGridLayout* attributesGrid, bool isExtern
         for(int index = 6; index < attributesGrid->rowCount() * attributesGrid->columnCount() - 1; index+=3){
             QLineEdit* name = qobject_cast<QLineEdit*>(attributesGrid->itemAt(index)->widget());
             QComboBox* type = qobject_cast<QComboBox*>(attributesGrid->itemAt(index + 1)->widget());
+            QJsonObject attributeDetail;
             if(type->currentText() == "string"){
+                attributeDetail["type"] = "string";
                 QTextEdit* textValue = qobject_cast<QTextEdit*>(attributesGrid->itemAt(index + 2)->widget());
-                jsonObject[name->text()] = textValue->toPlainText();
+                attributeDetail["value"] = textValue->toPlainText();
+                jsonObject[name->text()] = attributeDetail;
             }
             else if(type->currentText() == "int"){
+                attributeDetail["type"] = "int";
                 QSpinBox* numValue = qobject_cast<QSpinBox*>(attributesGrid->itemAt(index + 2)->widget());
-                jsonObject[name->text()] = numValue->value();
+                attributeDetail["value"] = numValue->value();
+                jsonObject[name->text()] = attributeDetail;
             }
             else{
+                attributeDetail["type"] = "float";
                 QDoubleSpinBox* numValue = qobject_cast<QDoubleSpinBox*>(attributesGrid->itemAt(index + 2)->widget());
-                jsonObject[name->text()] = numValue->value();
+                attributeDetail["value"] = numValue->value();
+                jsonObject[name->text()] = attributeDetail;
             }
         }
-
         newTask->setTaskParameters(jsonObject);
     }
 }
 
 
-void AppController::setTaskRepeatableScheduleValues(QHBoxLayout* dateContainerLayout, QHBoxLayout* daysLayout, QVBoxLayout* checkBoxLayout, QHBoxLayout* startTimeContainerLayout, QHBoxLayout* repeatableContainerLayout){
-    QDate startDate = qobject_cast<QDateEdit*>(dateContainerLayout->itemAt(1)->widget())->date();
+void AppController::setTaskRepeatableScheduleValues(QCheckBox* hourCheckBox, QCheckBox* secondCheckBox, QDateEdit* startDateEdit, QDateEdit* endDateEdit, QTimeEdit* startTime, QSpinBox* repeatableAmount){
+    QDate startDate = startDateEdit->date();
     int day = startDate.dayOfWeek() - 1;
+    taskTail->setIsRepeatable(true);
     taskTail->setStartDate(startDate);
-    taskTail->setEndDate(qobject_cast<QDateEdit*>(dateContainerLayout->itemAt(3)->widget())->date());
-    taskTail->getScheduling()[day]->setStartTime(new Schedule::Time(qobject_cast<QTimeEdit*>(startTimeContainerLayout->itemAt(1)->widget())->time()));
+    taskTail->setEndDate(endDateEdit->date());
+    taskTail->getScheduling()[day]->setStartTime(new Schedule::Time(startTime->time()));
     taskTail->getScheduling()[day]->setIterTime(taskTail->getScheduling()[day]->getStartTime());
     taskTail->getScheduling()[day]->setDay(day);
     for(int i = 0; i < 7; i++){
-
-        taskTail->getScheduling()[i]->setIsRepeatable(true);
-        if(qobject_cast<QCheckBox*>(checkBoxLayout->itemAt(0)->widget())->isChecked()){
-            taskTail->getScheduling()[i]->setRepeatableHours(qobject_cast<QSpinBox*>(repeatableContainerLayout->itemAt(1)->widget())->value());
+        if(hourCheckBox->isChecked()){
+            taskTail->getScheduling()[i]->setRepeatableHours(repeatableAmount->value());
         }
         else{
-            taskTail->getScheduling()[i]->setRepeatableSeconds(qobject_cast<QSpinBox*>(repeatableContainerLayout->itemAt(1)->widget())->value());
+            taskTail->getScheduling()[i]->setRepeatableSeconds(repeatableAmount->value());
         }
     }
     /*for(int i = 0; i < 7; i++){
@@ -130,12 +146,13 @@ void AppController::saveTaskToDatabase(){
 
     if(db.open()){
         QSqlQuery query(db);
-        query.prepare("INSERT INTO Task (id, description, parameters, isExternal, command, startDate, endDate) VALUES (:name, :description, :parameters, :isExternal, :command, :startDate, :endDate);");
+        query.prepare("INSERT INTO Task (id, description, parameters, isExternal, isRepeatable, command, startDate, endDate) VALUES (:name, :description, :parameters, :isExternal, :isRepeatable, :command, :startDate, :endDate);");
         query.bindValue(":name", taskTail->getTaskName());
         query.bindValue(":description", taskTail->getTaskDescription());
         QString jsonString = jsonDocument.toJson(QJsonDocument::Compact);
         query.bindValue(":parameters", jsonString);
         query.bindValue(":isExternal", taskTail->getIsExternal());
+        query.bindValue(":isRepeatable", true);
         query.bindValue("command", taskTail->getTaskCommand());
         query.bindValue(":startDate", taskTail->getStartDate());
         query.bindValue(":endDate", taskTail->getEndDate());
@@ -148,14 +165,14 @@ void AppController::saveTaskToDatabase(){
 
         for(int i = 0; i < 7; i++){
             if(schedule[i] && schedule[i]->getDay() != -1){
-                query.prepare("INSERT INTO Schedule (taskId, day, isRepeatable, repeatableHours, repeatableSeconds) VALUE (:taskId, :day, :isRepeatable, :repeatableHours, :repeatableSeconds);");
+                query.prepare("INSERT INTO Schedule (taskId, day, repeatableHours, repeatableSeconds) VALUE (:taskId, :day, :repeatableHours, :repeatableSeconds);");
                 query.bindValue(":taskId", taskTail->getTaskName());
                 query.bindValue(":day", i + 1);
-                query.bindValue(":isRepeatable", true);
                 query.bindValue(":repeatableHours", schedule[i]->getRepeatableHours());
                 query.bindValue(":repeatableSeconds", schedule[i]->getRepeatableSeconds());
                 query.exec();
                 scheduleId = query.lastInsertId();
+                schedule[i]->setIdDatabase(scheduleId.toInt());
                 query.clear();
 
                 query.prepare("INSERT INTO Time (scheduleId, time) VALUE (:scheduleId, :time);");
@@ -200,3 +217,45 @@ void AppController::callAddTaskToSchedule(){
     Scheduler::getInstance()->addTaskToQueue(taskTail);
 }
 
+void AppController::updateTaskInDatabase(Task* task){
+    QSqlDatabase db = QSqlDatabase::database("ticare_connection");
+
+    QJsonDocument jsonDocument(task->getTaskParameters());
+
+    if(db.open()){
+        QSqlQuery query(db);
+        query.prepare("UPDATE Task SET description = :description, parameters = :parameters, isExternal = :isExternal, isRepeatable = :isRepeatable, command = :command, startDate = :startDate, endDate = :endDate WHERE id = :name;");
+        query.bindValue(":name", task->getTaskName());
+        query.bindValue(":description", task->getTaskDescription());
+        QString jsonString = jsonDocument.toJson(QJsonDocument::Compact);
+        query.bindValue(":parameters", jsonString);
+        query.bindValue(":isExternal", task->getIsExternal());
+        query.bindValue(":isRepeatable", true);
+        query.bindValue("command", task->getTaskCommand());
+        query.bindValue(":startDate", task->getStartDate());
+        query.bindValue(":endDate", task->getEndDate());
+        query.exec();
+        query.clear();
+
+
+        Schedule** schedule = task->getScheduling();
+
+        for(int i = 0; i < 7; i++){
+            if(schedule[i] && schedule[i]->getDay() != -1){
+                query.prepare("UPDATE Schedule SET taskId = :taskId, day = :day, repeatableHours = :repeatableHours, repeatableSeconds = :repeatableSeconds WHERE id = :id;");
+                query.bindValue(":id", schedule[i]->getIdDatabase());
+                query.bindValue(":taskId", task->getTaskName());
+                query.bindValue(":day", i + 1);
+                query.bindValue(":repeatableHours", schedule[i]->getRepeatableHours());
+                query.bindValue(":repeatableSeconds", schedule[i]->getRepeatableSeconds());
+                query.exec();
+                query.clear();
+
+                query.prepare("UPDATE Time SET scheduleId = :scheduleId, time = :time WHERE scheduleId = :scheduleId;");
+                query.bindValue(":scheduleId", schedule[i]->getIdDatabase());
+                query.bindValue(":time", schedule[i]->getStartTime()->time);
+                query.exec();
+            }
+        }
+    }
+}

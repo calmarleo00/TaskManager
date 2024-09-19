@@ -13,7 +13,7 @@
 #include <QSplitter>
 #include <QSizeGrip>
 #include <QRect>
-#include <TaskCreationAttributeUI.h>
+#include <TaskAttributeUI.h>
 #include <TaskCreationSchedulingUIBuilder.h>
 #include <TaskFixedSchedulingUIBuilder.h>
 #include <TaskCreationSchedulingUIDirector.h>
@@ -25,7 +25,7 @@
 class TaskWindowUI : public QWidget{
     Q_OBJECT
     protected:
-        TaskCreationAttributeUI* firstWindow;
+        TaskAttributeUI* firstWindow;
         QWidget* schedulingSelectionWidget;
         TaskCreationSchedulingUIDirector* secondWindowDirector;
         QStackedWidget* stackedWindows = nullptr;
@@ -34,18 +34,24 @@ class TaskWindowUI : public QWidget{
         QString taskName;
         QString taskDescription;
 
-
-    virtual void setupTaskCreationWidgetsUI() = 0;
+    public:
+        virtual void setupTaskWidgetsUI() = 0;
+        virtual TaskAttributeUI* getFirstWindow() = 0;
+        virtual QWidget* getSchedulingSelectionWidget() = 0;
+        virtual TaskCreationSchedulingUIDirector* getSecondWindowDirector() = 0;
+        virtual void nextSchedulePage() = 0;
+        virtual QStackedWidget* getStackedWindows() = 0;
 
     private slots:
         virtual void backAttributeSelectionPage() = 0;
         virtual void backSchedulingSelectionPage() = 0;
         virtual void nextSchedulingSelectionPage(QGridLayout* attributesGrid, bool isExternal) = 0;
-        virtual void nextSchedulePage() = 0;
-        virtual void closeWindow(QHBoxLayout* dateContainerLayout, QHBoxLayout* daysLayout, QVBoxLayout* checkBoxLayout, QHBoxLayout* startTimeContainerLayout, QHBoxLayout* repeatableContainerLayout) = 0;
+        virtual void closeWindow(QCheckBox* hourCheckBox, QCheckBox* secondCheckBox, QDateEdit* startDateEdit, QDateEdit* endDateEdit, QTimeEdit* startTime, QSpinBox* repeatableAmount) = 0;
 
     signals:
-        void signalAddNewTaskToMainWindowUI(QString taskName, QString taskDescription);
+        void signalAddNewTaskToUI(QString taskName, QString taskDescription);
+        void signalUpdateTaskToMainWindowUI(Task* task);
+
     };
 
 #endif // TASKWINDOWUI_H

@@ -1,4 +1,3 @@
-#include "qboxlayout.h"
 #include "qcheckbox.h"
 #include "qdatetimeedit.h"
 #include <QWidget>
@@ -14,7 +13,6 @@ class TaskCreationSchedulingUIBuilder : public QWidget{
         QCheckBox* secondCheckBox = nullptr;
         QDateEdit* startDateEdit = nullptr;
         QDateEdit* endDateEdit = nullptr;
-        QCheckBox* daysCheckBoxes = nullptr;
         bool toChangeStartDate = true;
 
     public:
@@ -24,10 +22,13 @@ class TaskCreationSchedulingUIBuilder : public QWidget{
         virtual void buildDaysStep() = 0;
         virtual void buildTimeStep() = 0;
         virtual void buttonStep() = 0;
+        virtual QCheckBox* getHourCheckBox() = 0;
+        virtual QCheckBox* getSecondCheckBox() = 0;
+        virtual QDateEdit* getStartDateEdit() = 0;
+        virtual QDateEdit* getEndDateEdit() = 0;
 
     signals:
         void backPageSignal();
-        void closePageSignal(QHBoxLayout* dateContainerLayout, QHBoxLayout* daysLayout, QVBoxLayout* checkBoxLayout, QHBoxLayout* startTimeContainerLayout, QHBoxLayout* repeatableContainerLayout);
 };
 
 #endif // TASKCREATIONSCHEDULINGUIBUILDER_H

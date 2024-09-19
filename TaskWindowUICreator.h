@@ -4,8 +4,14 @@
 #include <TaskWindowUI.h>
 class TaskWindowUICreator : public QObject{
     Q_OBJECT
+    QString taskName;
 
-    TaskWindowUI* createTaskWindow();
+    public:
+        TaskWindowUICreator(){};
+        TaskWindowUICreator(QString taskToUpdateName){
+            taskName = taskToUpdateName;
+        };
+        TaskWindowUI* createTaskWindow(QString mode);
 
 };
 

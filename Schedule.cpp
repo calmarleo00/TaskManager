@@ -8,12 +8,6 @@ void Schedule::setDay(int day){
     this->day = day;
 }
 
-bool Schedule::getIsRepeatable(){
-    return this->isRepeatable;
-}
-void Schedule::setIsRepeatable(bool isRepeatable){
-    this->isRepeatable = isRepeatable;
-}
 int Schedule::getRepeatableHours(){
     return this->repeatableHours;
 }
@@ -38,4 +32,12 @@ Schedule::Time* Schedule::getIterTime(){
 }
 void Schedule::setIterTime(Time* iterTime){
     this->iterTime = iterTime;
+}
+
+int Schedule::getIdDatabase(){
+    return this->idDatabase;
+}
+
+void Schedule::setIdDatabase(int id){
+    this->idDatabase = id;
 }

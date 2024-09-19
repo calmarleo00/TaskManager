@@ -16,7 +16,9 @@ SOURCES += \
     TaskAttributeUI.cpp \
     TaskCreationWindowUI.cpp \
     TaskRepeatableSchedulingUIBuilder.cpp \
-    TaskUpdateWindowUI.cpp \
+    TaskUpdateWindowUIDecorator.cpp \
+    TaskWindowUICreator.cpp \
+    TrayIconMenu.cpp \
     main.cpp
 
 HEADERS += \
@@ -31,9 +33,10 @@ HEADERS += \
     TaskCreationWindowUI.h \
     TaskFixedSchedulingUIBuilder.h \
     TaskRepeatableSchedulingUIBuilder.h \
-    TaskUpdateWindowUI.h \
+    TaskUpdateWindowUIDecorator.h \
     TaskWindowUI.h \
-    TaskWindowUICreator.h
+    TaskWindowUICreator.h \
+    TrayIconMenu.h
 
 
 

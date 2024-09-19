@@ -82,3 +82,10 @@ void Task::setEndDate(QDate endDate){
 Schedule** Task::getScheduling(){
     return this->scheduling;
 }
+
+bool Task::getIsRepeatable(){
+    return this->isRepeatable;
+}
+void Task::setIsRepeatable(bool isRepeatable){
+    this->isRepeatable = isRepeatable;
+}

@@ -1,4 +1,7 @@
+#include "qcheckbox.h"
+#include "qdatetimeedit.h"
 #include "qjsonobject.h"
+#include "qspinbox.h"
 #include<QWidget>
 #include<Task.h>
 #ifndef APPCONTROLLER_H
@@ -9,16 +12,17 @@ class AppController : public QWidget{
     // Define two pointers to the first and last task in the list
     Task* taskHead = nullptr;
     Task* taskTail = nullptr;
+    Task* tmpTask;
     // Define a pointer that let iterate when necessary through the list of tasks
-    Task* taskIter = nullptr;
     QJsonObject jsonObject;
     AppController(){};
     virtual ~AppController(){};
 
-    Task* createNewTask(QString taskName, bool isExternal);
-    void setTaskAttributes(QGridLayout* attributesGrid, bool isExternal);
+    void createNewTask(QGridLayout* attributesGrid, bool isExternal);
+    void setTaskAttributes(Task* newTask, QGridLayout* attributesGrid, bool isExternal);
     void saveTaskToDatabase();
-    void setTaskRepeatableScheduleValues(QHBoxLayout* dateContainerLayout, QHBoxLayout* daysLayout, QVBoxLayout* checkBoxLayout, QHBoxLayout* startTimeContainerLayout, QHBoxLayout* repeatableContainerLayout);
+    void updateTaskInDatabase(Task* task);
+    void setTaskRepeatableScheduleValues(QCheckBox* hourCheckBox, QCheckBox* secondCheckBox, QDateEdit* startDateEdit, QDateEdit* endDateEdit, QTimeEdit* startTime, QSpinBox* repeatableAmount);
     void callAddTaskToSchedule();
     void deleteTask(QString taskName);
 

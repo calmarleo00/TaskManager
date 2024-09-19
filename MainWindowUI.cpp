@@ -1,7 +1,6 @@
-#include "qsqldatabase.h"
-#include "qsqlquery.h"
+#include "TaskWindowUICreator.h"
 #include<MainWindowUI.h>
-
+#include <TrayIconMenu.h>
 MainWindowUI *MainWindowUI::mainWindowUI = nullptr;
 
 
@@ -44,13 +43,14 @@ void MainWindowUI::setupMainWindowUI(){
 
 
 void MainWindowUI::openNewTaskCreationWindowUI() {
-    // Create a new instance of TaskCreationWindowUI
-    TaskCreationWindowUI *taskWindow = new TaskCreationWindowUI();
-    taskWindow->setupTaskCreationWidgetsUI();
-    connect(taskWindow, &TaskCreationWindowUI::signalAddNewTaskToMainWindowUI, this, &MainWindowUI::addNewTaskToMainWindowUI);
-
+    TaskWindowUICreator *taskWindowCreator = new TaskWindowUICreator();
+    taskWindowCreator->createTaskWindow("create");
 }
 
+void MainWindowUI::openNewTaskUpdateWindowUI(QString taskName) {
+    TaskWindowUICreator *taskWindowCreator = new TaskWindowUICreator(taskName);
+    taskWindowCreator->createTaskWindow("update");
+}
 
 void MainWindowUI::addNewTaskToMainWindowUI(QString taskName, QString taskDescription){
     QGroupBox* taskInformationGroup = new QGroupBox();
@@ -72,10 +72,13 @@ void MainWindowUI::addNewTaskToMainWindowUI(QString taskName, QString taskDescri
     QPushButton* detailButton = new QPushButton("View Task Details");
     detailButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     taskInformationGroupLayout->addWidget(detailButton, 0, Qt::AlignBottom);
+    detailButton->connect(detailButton, &QPushButton::released, this, [this, taskName]{this->openNewTaskUpdateWindowUI(taskName);});
 
     mainWindowUI->gridTaskMainWindowLayout->addWidget(taskInformationGroup, 0, col, 1, 1);
     mainWindowUI->gridTaskMainWindowLayout->setColumnMinimumWidth(col, 220);
     col += 1;
+    // Update also tray icon menu
+    TrayIconMenu::getInstance()->addTaskToTrayMenu(taskName);
 }
 
 void MainWindowUI::deleteTaskFromMainWindowUI(){
@@ -112,4 +115,15 @@ void MainWindowUI::deleteTaskFromMainWindowUI(){
 
     delete headList;
     delete tailList;
+}
+
+
+void MainWindowUI::updateTaskToMainWindowUI(Task* task){
+    for(int i = 0; i < mainWindowUI->gridTaskMainWindowLayout->count(); i++){
+
+        if(qobject_cast<QLabel*>(mainWindowUI->gridTaskMainWindowLayout->itemAt(i)->widget()->layout()->itemAt(0)->widget())->text() == task->getTaskName()){
+            qobject_cast<QLabel*>(mainWindowUI->gridTaskMainWindowLayout->itemAt(i)->widget()->layout()->itemAt(0)->widget())->setText(task->getTaskName());
+            qobject_cast<QLabel*>(mainWindowUI->gridTaskMainWindowLayout->itemAt(i)->widget()->layout()->itemAt(1)->widget())->setText(task->getTaskDescription());
+        }
+    }
 }

@@ -12,8 +12,8 @@ class Schedule{
             }
         };
     private:
+        int idDatabase;
         int day;
-        bool isRepeatable;
         int repeatableHours;
         int repeatableSeconds;
         Time* startTime;
@@ -22,15 +22,12 @@ class Schedule{
     public:
         Schedule(){
             day = -1;
-            isRepeatable = false;
             repeatableHours = -1;
             repeatableSeconds = -1;
         }
 
         int getDay();
         void setDay(int day);
-        bool getIsRepeatable();
-        void setIsRepeatable(bool isRepeatable);
         int getRepeatableHours();
         void setRepeatableHours(int repeatableHours);
         int getRepeatableSeconds();
@@ -39,6 +36,8 @@ class Schedule{
         void setStartTime(Time* startTime);
         Time* getIterTime();
         void setIterTime(Time* iterTime);
+        int getIdDatabase();
+        void setIdDatabase(int id);
 
 };
 

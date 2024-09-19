@@ -1,4 +1,5 @@
 #include <TaskCreationSchedulingUIBuilder.h>
+#include <Task.h>
 #ifndef TASKCREATIONSCHEDULINGUIDIRECTOR_H
 #define TASKCREATIONSCHEDULINGUIDIRECTOR_H
 class TaskCreationSchedulingUIDirector{
@@ -20,8 +21,6 @@ class TaskCreationSchedulingUIDirector{
             builder->buildTimeStep();
             builder->buttonStep();
         }
-
-
 };
 
 #endif // TASKCREATIONSCHEDULINGUIDIRECTOR_H

@@ -6,11 +6,11 @@
 
 
 void TaskCreationWindowUI::setupTaskWidgetsUI(){
-    firstWindow = new TaskCreationAttributeUI();
-    firstWindow->setupTaskCreationUI();
+    firstWindow = new TaskAttributeUI();
+    firstWindow->setupTaskAttributeCreationUI();
     stackedWindows->addWidget(firstWindow->getTaskAttributeWindowWidget());
     stackedWindows->setMaximumSize(firstWindow->getTaskAttributeWindowWidget()->maximumWidth(), firstWindow->getTaskAttributeWindowWidget()->maximumHeight());
-    connect(firstWindow, &TaskCreationAttributeUI::nextPage, this, &TaskCreationWindowUI::nextSchedulingSelectionPage);
+    connect(firstWindow, &TaskAttributeUI::nextPage, this, &TaskCreationWindowUI::nextSchedulingSelectionPage);
 
     schedulingSelectionWidget = new QWidget();
     schedulingSelectionWidget->setMaximumSize(300, 300);
@@ -29,7 +29,7 @@ void TaskCreationWindowUI::setupTaskWidgetsUI(){
     repeatableSelection = new QCheckBox("Repeatable");
     bottomContainerLayout->addWidget(repeatableSelection, 0, 1, Qt::AlignCenter);
     fixedSelection = new QCheckBox("Fixed");
-    bottomContainerLayout->addWidget(repeatableSelection, 0, 2, Qt::AlignCenter);
+    bottomContainerLayout->addWidget(fixedSelection, 0, 2, Qt::AlignCenter);
 
     QPushButton* previousPage = new QPushButton("< Back");
     previousPage->connect(previousPage, &QPushButton::released, this, &TaskCreationWindowUI::backAttributeSelectionPage);
@@ -38,7 +38,7 @@ void TaskCreationWindowUI::setupTaskWidgetsUI(){
 
     QPushButton* nextPage = new QPushButton("Next >");
     bottomContainerLayout->addWidget(nextPage, 1, 3, Qt::AlignRight);
-    nextPage->connect(nextPage, &QPushButton::released, this, &TaskCreationWindowUI::nextSchedulePage);
+    nextPage->connect(nextPage, &QPushButton::released, this, &TaskWindowUI::nextSchedulePage);
     stackedWindows->addWidget(schedulingSelectionWidget);
     stackedWindows->show();
 }
@@ -58,7 +58,7 @@ void TaskCreationWindowUI::backSchedulingSelectionPage(){
 void TaskCreationWindowUI::nextSchedulingSelectionPage(QGridLayout* attributesGrid, bool isExternal){
     taskName = qobject_cast<QTextEdit*>(attributesGrid->itemAt(2)->widget())->toPlainText();
     taskDescription = qobject_cast<QTextEdit*>(attributesGrid->itemAt(5)->widget())->toPlainText();
-    AppController::getInstance()->setTaskAttributes(attributesGrid, isExternal);
+    AppController::getInstance()->createNewTask(attributesGrid, isExternal);
     stackedWindows->setMaximumSize(schedulingSelectionWidget->maximumWidth(), schedulingSelectionWidget->maximumHeight());
     stackedWindows->setCurrentWidget(schedulingSelectionWidget);
 }
@@ -85,12 +85,28 @@ void TaskCreationWindowUI::TaskCreationWindowUI::nextSchedulePage(){
 
 }
 
-void TaskCreationWindowUI::closeWindow(QHBoxLayout* dateContainerLayout, QHBoxLayout* daysLayout, QVBoxLayout* checkBoxLayout, QHBoxLayout* startTimeContainerLayout, QHBoxLayout* repeatableContainerLayout){
-    AppController::getInstance()->setTaskRepeatableScheduleValues(dateContainerLayout, daysLayout, checkBoxLayout, startTimeContainerLayout, repeatableContainerLayout);
+void TaskCreationWindowUI::closeWindow(QCheckBox* hourCheckBox, QCheckBox* secondCheckBox, QDateEdit* startDateEdit, QDateEdit* endDateEdit, QTimeEdit* startTime, QSpinBox* repeatableAmount){
+    AppController::getInstance()->setTaskRepeatableScheduleValues(hourCheckBox, secondCheckBox, startDateEdit, endDateEdit, startTime, repeatableAmount);
     AppController::getInstance()->saveTaskToDatabase();
     AppController::getInstance()->callAddTaskToSchedule();
     stackedWindows->close();
-    emit signalAddNewTaskToMainWindowUI(taskName, taskDescription);
+    emit signalAddNewTaskToUI(taskName, taskDescription);
 }
 
+TaskAttributeUI* TaskCreationWindowUI::getFirstWindow(){
+    return this->firstWindow;
+}
+
+QWidget* TaskCreationWindowUI::getSchedulingSelectionWidget(){
+    return this->schedulingSelectionWidget;
+}
+
+TaskCreationSchedulingUIDirector* TaskCreationWindowUI::getSecondWindowDirector(){
+    return this->secondWindowDirector;
+}
+
+
+QStackedWidget* TaskCreationWindowUI::getStackedWindows(){
+    return this->stackedWindows;
+}
 

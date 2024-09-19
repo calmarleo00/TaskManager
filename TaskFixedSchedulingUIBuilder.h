@@ -13,9 +13,9 @@ class TaskFixedSchedulingUIBuilder : public TaskCreationSchedulingUIBuilder{
             emit backPageSignal();
         }
 
-        void emitClosePageSignal(){
+        /*void emitClosePageSignal(){
             emit closePageSignal(NULL, NULL, NULL, NULL, NULL);
-        }
+        }*/
 };
 
 #endif // TASKFIXEDSCHEDULINGUIBUILDER_H
