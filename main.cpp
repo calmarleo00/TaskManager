@@ -46,6 +46,9 @@ int main(int argc, char **argv)
     MainWindowUI* mainWindowUI = MainWindowUI::getInstance();
     mainWindowUI->setupMainWindowUI();
 
+    QString projectPath = QDir::currentPath() + "/../..";
+    QString filePath = QDir(projectPath).filePath("trayiconmenu.png");
+    QSystemTrayIcon trayIcon((QIcon(filePath)));
     trayIcon.setToolTip("Task Scheduler");
 
     QRect screenGeometry = QGuiApplication::primaryScreen()->geometry();
@@ -68,9 +71,10 @@ int main(int argc, char **argv)
     // Show the menu at the calculated position
     trayMenu->move(x, y);
 
-    trayMenu->setGeometry(trayIcon.geometry());
-    QMenu *trayMenuContext = new QMenu();
-    QAction *showAction = trayMenuContext->addAction("Show Tasks");
+    QMenu* trayMenuContext = new QMenu();
+    QAction* showAction = trayMenuContext->addAction("Show Tasks");
+    QAction* quitAction = trayMenuContext->addAction("Quit");
+    QObject::connect(quitAction, &QAction::triggered, qApp, &QApplication::quit);
     QObject::connect(showAction, &QAction::triggered, [trayMenu] {
         trayMenu->show();
     });

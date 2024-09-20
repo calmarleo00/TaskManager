@@ -6,14 +6,17 @@
 
 
 void TaskCreationWindowUI::setupTaskWidgetsUI(){
-    firstWindow = new TaskAttributeUI();
+    firstWindow = new TaskAttributeUI(MainWindowUI::getInstance());
     firstWindow->setupTaskAttributeCreationUI();
+    stackedWindows->setWindowModality(Qt::ApplicationModal);
+
     stackedWindows->addWidget(firstWindow->getTaskAttributeWindowWidget());
+
     stackedWindows->setMaximumSize(firstWindow->getTaskAttributeWindowWidget()->maximumWidth(), firstWindow->getTaskAttributeWindowWidget()->maximumHeight());
     connect(firstWindow, &TaskAttributeUI::nextPage, this, &TaskCreationWindowUI::nextSchedulingSelectionPage);
 
     schedulingSelectionWidget = new QWidget();
-    schedulingSelectionWidget->setMaximumSize(300, 300);
+    schedulingSelectionWidget->setMaximumSize(400, 100);
     QVBoxLayout* schedulingSelectionLayout = new QVBoxLayout();
     schedulingSelectionLayout->setAlignment(Qt::AlignTop);
     schedulingSelectionWidget->setLayout(schedulingSelectionLayout);
@@ -25,11 +28,15 @@ void TaskCreationWindowUI::setupTaskWidgetsUI(){
     QGridLayout* bottomContainerLayout = new QGridLayout();
     bottomContainerWidget->setLayout(bottomContainerLayout);
     schedulingSelectionLayout->addWidget(bottomContainerWidget);
-
+    schedulingSelectionLayout->setStretch(0, 0);
+    schedulingSelectionLayout->setStretch(1, 1);
     repeatableSelection = new QCheckBox("Repeatable");
+    repeatableSelection->setChecked(true);
     bottomContainerLayout->addWidget(repeatableSelection, 0, 1, Qt::AlignCenter);
     fixedSelection = new QCheckBox("Fixed");
     bottomContainerLayout->addWidget(fixedSelection, 0, 2, Qt::AlignCenter);
+    repeatableSelection->connect(repeatableSelection, &QCheckBox::stateChanged, this, &TaskCreationWindowUI::disableRepeatableCheckBox);
+    fixedSelection->connect(fixedSelection, &QCheckBox::stateChanged, this, &TaskCreationWindowUI::disableFixedCheckBox);
 
     QPushButton* previousPage = new QPushButton("< Back");
     previousPage->connect(previousPage, &QPushButton::released, this, &TaskCreationWindowUI::backAttributeSelectionPage);
@@ -45,13 +52,14 @@ void TaskCreationWindowUI::setupTaskWidgetsUI(){
 
 void TaskCreationWindowUI::backAttributeSelectionPage(){
     stackedWindows->setCurrentWidget(firstWindow->getTaskAttributeWindowWidget());
+    stackedWindows->setMaximumSize(firstWindow->getTaskAttributeWindowWidget()->minimumWidth(), firstWindow->getTaskAttributeWindowWidget()->minimumHeight());
     stackedWindows->setMaximumSize(firstWindow->getTaskAttributeWindowWidget()->maximumWidth(), firstWindow->getTaskAttributeWindowWidget()->maximumHeight());
     stackedWindows->show();
 }
 
 void TaskCreationWindowUI::backSchedulingSelectionPage(){
+    stackedWindows->setFixedSize(schedulingSelectionWidget->maximumWidth(), schedulingSelectionWidget->maximumHeight());
     stackedWindows->setCurrentWidget(schedulingSelectionWidget);
-    stackedWindows->setMaximumSize(schedulingSelectionWidget->maximumWidth(), schedulingSelectionWidget->maximumHeight());
     stackedWindows->show();
 }
 
@@ -59,33 +67,49 @@ void TaskCreationWindowUI::nextSchedulingSelectionPage(QGridLayout* attributesGr
     taskName = qobject_cast<QTextEdit*>(attributesGrid->itemAt(2)->widget())->toPlainText();
     taskDescription = qobject_cast<QTextEdit*>(attributesGrid->itemAt(5)->widget())->toPlainText();
     AppController::getInstance()->createNewTask(attributesGrid, isExternal);
-    stackedWindows->setMaximumSize(schedulingSelectionWidget->maximumWidth(), schedulingSelectionWidget->maximumHeight());
+    stackedWindows->setFixedSize(schedulingSelectionWidget->maximumWidth(), schedulingSelectionWidget->maximumHeight());
     stackedWindows->setCurrentWidget(schedulingSelectionWidget);
 }
 
 void TaskCreationWindowUI::TaskCreationWindowUI::nextSchedulePage(){
     if(fixedSelection->isChecked()){
-        /*TaskFixedSchedulingUIBuilder* taskSchedulingWindowBuilder = new TaskFixedSchedulingUIBuilder();
+        TaskFixedSchedulingUIBuilder* taskSchedulingWindowBuilder = new TaskFixedSchedulingUIBuilder();
         connect(taskSchedulingWindowBuilder, &TaskFixedSchedulingUIBuilder::backPageSignal, this, &TaskCreationWindowUI::backSchedulingSelectionPage);
-        secondWindowDirector = new TaskCreationSchedulingUIDirector(taskSchedulingWindowBuilder);
-        secondWindowDirector->buildWindow();
-        stackedWindows->setCurrentWidget(taskSchedulingWindowBuilder->getResult());*/
-    }
-    else if(repeatableSelection->isChecked()){
-        TaskRepeatableSchedulingUIBuilder* taskSchedulingWindowBuilder = new TaskRepeatableSchedulingUIBuilder();
-        connect(taskSchedulingWindowBuilder, &TaskRepeatableSchedulingUIBuilder::backPageSignal, this, &TaskCreationWindowUI::backSchedulingSelectionPage);
-        connect(taskSchedulingWindowBuilder, &TaskRepeatableSchedulingUIBuilder::closePageSignal, this, &TaskCreationWindowUI::closeWindow);
+        connect(taskSchedulingWindowBuilder, &TaskFixedSchedulingUIBuilder::closePageFixedSignal, this, &TaskCreationWindowUI::closeFixedWindow);
         secondWindowDirector = new TaskCreationSchedulingUIDirector(taskSchedulingWindowBuilder);
         secondWindowDirector->buildWindow();
         stackedWindows->addWidget(taskSchedulingWindowBuilder->getResult());
         stackedWindows->setCurrentWidget(taskSchedulingWindowBuilder->getResult());
+        stackedWindows->setMinimumSize(taskSchedulingWindowBuilder->getResult()->minimumWidth(), taskSchedulingWindowBuilder->getResult()->minimumHeight());
+        stackedWindows->setMaximumSize(taskSchedulingWindowBuilder->getResult()->maximumWidth(), taskSchedulingWindowBuilder->getResult()->maximumHeight());
+        stackedWindows->show();
+    }
+    else if(repeatableSelection->isChecked()){
+        TaskRepeatableSchedulingUIBuilder* taskSchedulingWindowBuilder = new TaskRepeatableSchedulingUIBuilder();
+        connect(taskSchedulingWindowBuilder, &TaskRepeatableSchedulingUIBuilder::backPageSignal, this, &TaskCreationWindowUI::backSchedulingSelectionPage);
+        connect(taskSchedulingWindowBuilder, &TaskRepeatableSchedulingUIBuilder::closePageRepeatableSignal, this, &TaskCreationWindowUI::closeRepeatableWindow);
+        secondWindowDirector = new TaskCreationSchedulingUIDirector(taskSchedulingWindowBuilder);
+        secondWindowDirector->buildWindow();
+        stackedWindows->addWidget(taskSchedulingWindowBuilder->getResult());
+        stackedWindows->setCurrentWidget(taskSchedulingWindowBuilder->getResult());
+        stackedWindows->setMinimumSize(taskSchedulingWindowBuilder->getResult()->minimumWidth(), taskSchedulingWindowBuilder->getResult()->minimumHeight());
         stackedWindows->setMaximumSize(taskSchedulingWindowBuilder->getResult()->maximumWidth(), taskSchedulingWindowBuilder->getResult()->maximumHeight());
         stackedWindows->show();
     }
 
 }
 
-void TaskCreationWindowUI::closeWindow(QCheckBox* hourCheckBox, QCheckBox* secondCheckBox, QDateEdit* startDateEdit, QDateEdit* endDateEdit, QTimeEdit* startTime, QSpinBox* repeatableAmount){
+
+void TaskCreationWindowUI::closeFixedWindow(QCheckBox* daysCheckBoxes, QVBoxLayout* timeContainerLayout, QDateEdit* startDateEdit, QDateEdit* endDateEdit){
+    AppController::getInstance()->setTaskFixedScheduleValues(daysCheckBoxes, timeContainerLayout, startDateEdit, endDateEdit);
+    AppController::getInstance()->saveTaskToDatabase();
+    AppController::getInstance()->callAddTaskToSchedule();
+    stackedWindows->close();
+    emit signalAddNewTaskToUI(taskName, taskDescription);
+}
+
+
+void TaskCreationWindowUI::closeRepeatableWindow(QCheckBox* hourCheckBox, QCheckBox* secondCheckBox, QDateEdit* startDateEdit, QDateEdit* endDateEdit, QTimeEdit* startTime, QSpinBox* repeatableAmount){
     AppController::getInstance()->setTaskRepeatableScheduleValues(hourCheckBox, secondCheckBox, startDateEdit, endDateEdit, startTime, repeatableAmount);
     AppController::getInstance()->saveTaskToDatabase();
     AppController::getInstance()->callAddTaskToSchedule();
@@ -110,3 +134,14 @@ QStackedWidget* TaskCreationWindowUI::getStackedWindows(){
     return this->stackedWindows;
 }
 
+void TaskCreationWindowUI::disableRepeatableCheckBox(int value) {
+    if (value && fixedSelection->isChecked()) {
+        fixedSelection->setChecked(false);
+    }
+}
+
+void TaskCreationWindowUI::disableFixedCheckBox(int value) {
+    if (value && repeatableSelection->isChecked()) {
+        repeatableSelection->setChecked(false);
+    }
+}

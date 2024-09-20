@@ -26,6 +26,7 @@ private:
         void addTaskToQueue(Task* task);
         void removeTaskFromQueue(QString taskName);
         void executeTask();
+        void postExecuteTask(Task* task);
         void populateTaskScheduleQueue();
         void updateTimerFirstTask();
         void updateTaskSchedule(Task* task);

@@ -1,9 +1,13 @@
+/* La classe MainWindowUI è la classe principale per la gestione dell'interfaccia grafica principale,
+ * con metodi per la creazione, gestione e aggiornamento dei task */
 #include "TaskWindowUICreator.h"
 #include<MainWindowUI.h>
 #include <TrayIconMenu.h>
+
 MainWindowUI *MainWindowUI::mainWindowUI = nullptr;
 
-
+/* L'oggetto MainWindow è un singleton, ciò permette di assicurarsi che esista una sola istanza nel tempo di MainWindowUI.
+ * Nel caso in cui non esistesse ancora, ne crea una nuova e la restituisce. */
 MainWindowUI *MainWindowUI::getInstance()
 {
     if(MainWindowUI::mainWindowUI == nullptr){
@@ -12,56 +16,79 @@ MainWindowUI *MainWindowUI::getInstance()
     return MainWindowUI::mainWindowUI;
 }
 
+/* Configura l'interfaccia principale della finestra. */
 void MainWindowUI::setupMainWindowUI(){
-    // Set main window to maximum and do not let modify the size
+    // Massimizza la finestra e ne fissa le dimensioni.
     mainWindowUI->setWindowState(Qt::WindowMaximized);
     mainWindowUI->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    // Set a grid layout for the main window
+    gridTaskMainWindowLayout = new QGridLayout();
+    // Crea un layout a griglia per la finestra principale e un'area di scorrimento per visualizzare i tasks.
     QGridLayout* gridMainWindowLayout = new QGridLayout();
     mainWindowUI->setLayout(gridMainWindowLayout);
-    // A container useful for defining a scroll area for the task grid
-    QWidget* taskGridContainer = new QWidget();
+
+    // Un container utile per il layout a griglia in cui verranno inseriti i diversi tasks
+    QWidget* taskGridContainer = new QWidget(mainWindowUI);
     taskGridContainer->setLayout(gridTaskMainWindowLayout);
-    // A scroll area that will make available scrolling through the tasks
-    QScrollArea* taskScrollArea = new QScrollArea();
-    // Set the scroll area's widget to the container
+
+    // Una scroll area che permetterà di scorrere tra i diversi tasks inseriti
+    QScrollArea* taskScrollArea = new QScrollArea(mainWindowUI);
+
+    // La scroll area deve puntare al widget contenente i tasks
     taskScrollArea->setWidget(taskGridContainer);
     taskScrollArea->setWidgetResizable(true);
     // Insert inside the first row of the main grid the scroll area
     gridMainWindowLayout->addWidget(taskScrollArea, 1, 0, 1, 3);
-    // Create two button at the bottom of the window, one for task creation the other for task deletion
-    QPushButton* newTaskButton = new QPushButton("Create a new task");
-    QPushButton* deleteTaskButton = new QPushButton("Delete selected tasks");
+
+    /* Aggiunge due pulsanti in basso per creare e cancellare task e connette i pulsanti alle relative funzioni di creazione
+    * (openNewTaskCreationWindowUI) e cancellazione (deleteTaskFromMainWindowUI). */
+    QPushButton* newTaskButton = new QPushButton("Create a new task", mainWindowUI);
+    QPushButton* deleteTaskButton = new QPushButton("Delete selected tasks", mainWindowUI);
+    newTaskButton->connect(newTaskButton, &QPushButton::released, this, &MainWindowUI::openNewTaskCreationWindowUI);
     deleteTaskButton->connect(deleteTaskButton, &QPushButton::released, this, &MainWindowUI::deleteTaskFromMainWindowUI);
     gridMainWindowLayout->addWidget(newTaskButton, 0, 0, 1, 1);
     gridMainWindowLayout->addWidget(deleteTaskButton, 0, 2, 1, 1);
 
-    newTaskButton->connect(newTaskButton, &QPushButton::released, this, &MainWindowUI::openNewTaskCreationWindowUI);
-
+    // Mostra la finestra principale una volta completata la configurazione.
     mainWindowUI->show();
 }
 
-
+/* Crea una finestra per l'aggiunta di un nuovo task utilizzando un oggetto TaskWindowUICreator.
+Il parametro passato a createTaskWindow ("create") indica che la funzione della nuova finestra è quella di creare un nuovo task. */
 void MainWindowUI::openNewTaskCreationWindowUI() {
     TaskWindowUICreator *taskWindowCreator = new TaskWindowUICreator();
     taskWindowCreator->createTaskWindow("create");
 }
 
+/* Apre una finestra per aggiornare un task esistente, passando il nome del task alla funzione.
+Il parametro "update" indica che la funzione della nuova finestra è quella di aggiornare un task esistente. */
 void MainWindowUI::openNewTaskUpdateWindowUI(QString taskName) {
     TaskWindowUICreator *taskWindowCreator = new TaskWindowUICreator(taskName);
     taskWindowCreator->createTaskWindow("update");
 }
 
+/* Aggiunge un nuovo task all'interfaccia principale. */
 void MainWindowUI::addNewTaskToMainWindowUI(QString taskName, QString taskDescription){
-    QGroupBox* taskInformationGroup = new QGroupBox();
+    // Definisce un gruppo contenente informazioni base su ogni singolo task (nome e descrizione)
+    QGroupBox* taskInformationGroup = new QGroupBox(mainWindowUI);
     taskInformationGroup->setMaximumSize(300, 700);
-    QVBoxLayout* taskInformationGroupLayout = new QVBoxLayout();
+    QVBoxLayout* taskInformationGroupLayout = new QVBoxLayout(taskInformationGroup);
     taskInformationGroup->setLayout(taskInformationGroupLayout);
+    // Il gruppo è selezionabile così che l'utente possa scegliere dei task ben precisi prima di eliminarli
     taskInformationGroup->setCheckable(true);
     taskInformationGroup->setChecked(false);
 
-    QLabel* nameLabel = new QLabel(taskName);
-    QLabel* descriptionLabel = new QLabel(taskDescription);
+    QLabel* nameLabel = new QLabel(taskName, taskInformationGroup);
+
+    // Impostare la size del font della label
+    QFont fontLabel;
+    fontLabel.setPointSize(16);
+    nameLabel->setFont(fontLabel);
+
+    QLabel* descriptionLabel = new QLabel(taskDescription, taskInformationGroup);
+    // Impostare la size del font della description
+    QFont fontDescription;
+    fontDescription.setPointSize(12);
+    nameLabel->setFont(fontDescription);
 
     taskInformationGroupLayout->addWidget(nameLabel, 0, Qt::AlignCenter);
     taskInformationGroupLayout->addWidget(descriptionLabel, 0, Qt::AlignCenter);
@@ -69,18 +96,25 @@ void MainWindowUI::addNewTaskToMainWindowUI(QString taskName, QString taskDescri
     nameLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     descriptionLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    QPushButton* detailButton = new QPushButton("View Task Details");
+    // Per ogni task viene creato un pulsante che ne permette la visualizzazione dei dati
+    QPushButton* detailButton = new QPushButton("View Task Details", taskInformationGroup);
     detailButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     taskInformationGroupLayout->addWidget(detailButton, 0, Qt::AlignBottom);
     detailButton->connect(detailButton, &QPushButton::released, this, [this, taskName]{this->openNewTaskUpdateWindowUI(taskName);});
 
-    mainWindowUI->gridTaskMainWindowLayout->addWidget(taskInformationGroup, 0, col, 1, 1);
-    mainWindowUI->gridTaskMainWindowLayout->setColumnMinimumWidth(col, 220);
+    // Posiziona il task nel layout a griglia della finestra principale
+    gridTaskMainWindowLayout->addWidget(taskInformationGroup, 0, col, 1, 1);
+    gridTaskMainWindowLayout->setColumnMinimumWidth(col, 220);
     col += 1;
-    // Update also tray icon menu
+
+    // Aggiorna il TrayIconMenu con il nuovo task.
     TrayIconMenu::getInstance()->addTaskToTrayMenu(taskName);
 }
 
+
+/* Cancella i task selezionati (quelli con la casella di controllo selezionata)
+ * Scorre il layout della finestra principale, controllando quali task sono selezionati, inserendoli in una lista.
+ * La lista verrà poi scorsa per eliminare in sicurezza, sia dall'interfaccia che dal database, ogni task selezionato. */
 void MainWindowUI::deleteTaskFromMainWindowUI(){
     struct ListGroupBoxToDelete{
         QGroupBox* taskGroupBox;
@@ -92,10 +126,11 @@ void MainWindowUI::deleteTaskFromMainWindowUI(){
     };
     ListGroupBoxToDelete* headList = nullptr;
     ListGroupBoxToDelete* tailList = nullptr;
-    for(int i = 0; i < this->gridTaskMainWindowLayout->count(); i++){
-        QGroupBox* groupBox = qobject_cast<QGroupBox*>(this->gridTaskMainWindowLayout->itemAt(i)->widget());
+    for(int i = 0; i < gridTaskMainWindowLayout->count(); i++){
+        QGroupBox* groupBox = qobject_cast<QGroupBox*>(gridTaskMainWindowLayout->itemAt(i)->widget());
         if(groupBox->isChecked()){
             AppController::getInstance()->deleteTask(qobject_cast<QLabel*>(groupBox->layout()->itemAt(0)->widget())->text());
+            TrayIconMenu::getInstance()->deleteTaskFromTrayMenu(qobject_cast<QLabel*>(groupBox->layout()->itemAt(0)->widget())->text());
             if(headList){
                 tailList->nextTaskGroupBox = new ListGroupBoxToDelete(groupBox);
                 tailList = tailList->nextTaskGroupBox;
@@ -109,21 +144,29 @@ void MainWindowUI::deleteTaskFromMainWindowUI(){
     tailList = headList;
     while(tailList){
         tailList->taskGroupBox->deleteLater();
-        this->gridTaskMainWindowLayout->removeWidget(tailList->taskGroupBox);
-        tailList = tailList->nextTaskGroupBox;
+        gridTaskMainWindowLayout->removeWidget(tailList->taskGroupBox);
+        ListGroupBoxToDelete* tempVal = tailList->nextTaskGroupBox;
+        delete tailList;
+        tailList = tempVal;
+        col -= 1;
     }
-
-    delete headList;
     delete tailList;
 }
 
-
+/* Aggiorna le informazioni di un task esistente nell'interfaccia principale.
+ * Scorre i task presenti nella finestra principale e aggiorna il nome e la descrizione del task corrispondente, se trova una corrispondenza con il nome del task passato come parametro */
 void MainWindowUI::updateTaskToMainWindowUI(Task* task){
-    for(int i = 0; i < mainWindowUI->gridTaskMainWindowLayout->count(); i++){
-
-        if(qobject_cast<QLabel*>(mainWindowUI->gridTaskMainWindowLayout->itemAt(i)->widget()->layout()->itemAt(0)->widget())->text() == task->getTaskName()){
-            qobject_cast<QLabel*>(mainWindowUI->gridTaskMainWindowLayout->itemAt(i)->widget()->layout()->itemAt(0)->widget())->setText(task->getTaskName());
-            qobject_cast<QLabel*>(mainWindowUI->gridTaskMainWindowLayout->itemAt(i)->widget()->layout()->itemAt(1)->widget())->setText(task->getTaskDescription());
+    for(int i = 0; i < gridTaskMainWindowLayout->count(); i++){
+        if(qobject_cast<QLabel*>(gridTaskMainWindowLayout->itemAt(i)->widget()->layout()->itemAt(0)->widget())->text() == task->getTaskName()){
+            qobject_cast<QLabel*>(gridTaskMainWindowLayout->itemAt(i)->widget()->layout()->itemAt(0)->widget())->setText(task->getTaskName());
+            qobject_cast<QLabel*>(gridTaskMainWindowLayout->itemAt(i)->widget()->layout()->itemAt(1)->widget())->setText(task->getTaskDescription());
         }
     }
+}
+
+/* Gestisce la chiusura della finestra principale.
+ * Nasconde la finestra invece di chiuderla completamente e ignora l'evento di chiusura, in modo che possa continuare a funzionare in background. */
+void MainWindowUI::closeEvent(QCloseEvent *event) {
+        getInstance()->hide();
+        event->ignore();
 }

@@ -15,6 +15,7 @@ SOURCES += \
     Task2.cpp \
     TaskAttributeUI.cpp \
     TaskCreationWindowUI.cpp \
+    TaskFixedSchedulingUIBuilder.cpp \
     TaskRepeatableSchedulingUIBuilder.cpp \
     TaskUpdateWindowUIDecorator.cpp \
     TaskWindowUICreator.cpp \
@@ -23,6 +24,7 @@ SOURCES += \
 
 HEADERS += \
     AppController.h \
+    Constants.h \
     MainWindowUI.h \
     Schedule.h \
     Scheduler.h \

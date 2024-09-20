@@ -23,6 +23,7 @@ class AppController : public QWidget{
     void saveTaskToDatabase();
     void updateTaskInDatabase(Task* task);
     void setTaskRepeatableScheduleValues(QCheckBox* hourCheckBox, QCheckBox* secondCheckBox, QDateEdit* startDateEdit, QDateEdit* endDateEdit, QTimeEdit* startTime, QSpinBox* repeatableAmount);
+    void setTaskFixedScheduleValues(QCheckBox* daysCheckBoxes, QVBoxLayout* timeContainerLayout, QDateEdit* startDateEdit, QDateEdit* endDateEdit);
     void callAddTaskToSchedule();
     void deleteTask(QString taskName);
 

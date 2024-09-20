@@ -2,18 +2,26 @@
 #include <MainWindowUI.h>
 #include <AppController.h>
 #include <Scheduler.h>
+
 void TaskUpdateWindowUIDecorator::setupTaskWidgetsUI(){
     component->setupTaskWidgetsUI();
     firstWindow = component->getFirstWindow();
+    QPushButton* nextFirstWindowButton = firstWindow->getNextPageButton();
+    nextFirstWindowButton->disconnect(nextFirstWindowButton, &QPushButton::released, firstWindow, &TaskAttributeUI::nextPageCreate);
+    nextFirstWindowButton->connect(nextFirstWindowButton, &QPushButton::released, firstWindow, &TaskAttributeUI::nextPageUpdate);
+
     QGridLayout* attributesGrid = firstWindow->getAttributesGrid();
-    // Add task name
+    // Aggiunta del nome del task inserito precedentemente, reso read-only
     qobject_cast<QTextEdit*>(attributesGrid->itemAt(2)->widget())->setPlainText(task->getTaskName());
-    // Add task description
+    qobject_cast<QTextEdit*>(attributesGrid->itemAt(2)->widget())->setReadOnly(true);
+    // Aggiunta della descrizione
     qobject_cast<QTextEdit*>(attributesGrid->itemAt(5)->widget())->setPlainText(task->getTaskDescription());
+    // Se il task è esterno, nella finestra bisogna aggiungere una sola riga aggiuntiva (i.e. quella relativa al command)
     if(task->getIsExternal()){
         firstWindow->setIsExternal(true);
         qobject_cast<QTextEdit*>(attributesGrid->itemAt(8)->widget())->setPlainText(task->getTaskCommand());
     }
+    // Se il task è interno, invece, nel layout devono essere aggiunti tutti gli attributi inseriti in precedenza dall'utente (e.g. nome, type, value)
     else{
         firstWindow->setIsExternal(false);
         for(int i = 0; i < task->getTaskParameters().count(); i++){
@@ -36,7 +44,7 @@ void TaskUpdateWindowUIDecorator::setupTaskWidgetsUI(){
         }
     }
 
-
+    // Imposta la pagina di selezione del tipo di schedulazione con il flag attivo in base a ciò che era stato inserito in precedenza
     schedulingSelectionWidget = component->getSchedulingSelectionWidget();
     QLayout* schedulingSelectionLayout = schedulingSelectionWidget->layout();
 
@@ -50,23 +58,17 @@ void TaskUpdateWindowUIDecorator::setupTaskWidgetsUI(){
         qobject_cast<QCheckBox*>(bottomContainerLayout->itemAt(0)->widget())->setChecked(false);
         qobject_cast<QCheckBox*>(bottomContainerLayout->itemAt(1)->widget())->setChecked(true);
     }
+    // Il bottone "Next >" deve essere ora collegato al metodo implementato all'interno del decorator
+    // Questo per permettere al Decorator di interagire con il Director per costruire la pagina e successivamente inserirvi i dati corretti
     QPushButton* nextButton = qobject_cast<QPushButton*>(bottomContainerLayout->itemAt(3)->widget());
     disconnect(nextButton, &QPushButton::released, component, &TaskWindowUI::nextSchedulePage);
     nextButton->connect(nextButton, &QPushButton::released, this, &TaskUpdateWindowUIDecorator::nextSchedulePage);
 
 }
 
-void TaskUpdateWindowUIDecorator::backAttributeSelectionPage(){
-    stackedWindows->setCurrentWidget(firstWindow->getTaskAttributeWindowWidget());
-    stackedWindows->setMaximumSize(firstWindow->getTaskAttributeWindowWidget()->maximumWidth(), firstWindow->getTaskAttributeWindowWidget()->maximumHeight());
-    stackedWindows->show();
-}
 
-void TaskUpdateWindowUIDecorator::backSchedulingSelectionPage(){
-    stackedWindows->setCurrentWidget(schedulingSelectionWidget);
-    stackedWindows->setMaximumSize(schedulingSelectionWidget->maximumWidth(), schedulingSelectionWidget->maximumHeight());
-    stackedWindows->show();
-}
+void TaskUpdateWindowUIDecorator::backAttributeSelectionPage(){}
+void TaskUpdateWindowUIDecorator::backSchedulingSelectionPage(){}
 
 void TaskUpdateWindowUIDecorator::nextSchedulingSelectionPage(QGridLayout* attributesGrid, bool isExternal){
     taskName = qobject_cast<QTextEdit*>(attributesGrid->itemAt(2)->widget())->toPlainText();
@@ -87,7 +89,7 @@ void TaskUpdateWindowUIDecorator::TaskUpdateWindowUIDecorator::nextSchedulePage(
     else if(task->getIsRepeatable()){
         TaskRepeatableSchedulingUIBuilder* taskSchedulingWindowBuilder = new TaskRepeatableSchedulingUIBuilder();
         connect(taskSchedulingWindowBuilder, &TaskRepeatableSchedulingUIBuilder::backPageSignal, this, &TaskUpdateWindowUIDecorator::backSchedulingSelectionPage);
-        connect(taskSchedulingWindowBuilder, &TaskRepeatableSchedulingUIBuilder::closePageSignal, this, &TaskUpdateWindowUIDecorator::closeWindow);
+        connect(taskSchedulingWindowBuilder, &TaskRepeatableSchedulingUIBuilder::closePageRepeatableSignal, this, &TaskUpdateWindowUIDecorator::closeRepeatableWindow);
         secondWindowDirector = new TaskCreationSchedulingUIDirector(taskSchedulingWindowBuilder);
         secondWindowDirector->buildWindow();
 
@@ -111,9 +113,20 @@ void TaskUpdateWindowUIDecorator::TaskUpdateWindowUIDecorator::nextSchedulePage(
 
 }
 
-void TaskUpdateWindowUIDecorator::closeWindow(QCheckBox* hourCheckBox, QCheckBox* secondCheckBox, QDateEdit* startDateEdit, QDateEdit* endDateEdit, QTimeEdit* startTime, QSpinBox* repeatableAmount){
+// Se il task era ripetibile, una volta chiusa la finestra viene richiesto all'AppController di aggiornare i valori del task all'interno dello heap e del database. Infine invia un segnale alla MainWinowUI affinchè aggiorni la grafica di conseguenza
+void TaskUpdateWindowUIDecorator::closeRepeatableWindow(QCheckBox* hourCheckBox, QCheckBox* secondCheckBox, QDateEdit* startDateEdit, QDateEdit* endDateEdit, QTimeEdit* startTime, QSpinBox* repeatableAmount){
     AppController::getInstance()->setTaskAttributes(task, firstWindow->getAttributesGrid(), firstWindow->getIsExternal());
     AppController::getInstance()->setTaskRepeatableScheduleValues(hourCheckBox, secondCheckBox, startDateEdit, endDateEdit, startTime, repeatableAmount);
+    AppController::getInstance()->updateTaskInDatabase(task);
+    Scheduler::getInstance()->removeTaskFromQueue(task->getTaskName());
+    AppController::getInstance()->callAddTaskToSchedule();
+    component->getStackedWindows()->close();
+    emit signalUpdateTaskToMainWindowUI(task);
+}
+
+void TaskUpdateWindowUIDecorator::closeFixedWindow(QCheckBox* daysCheckBoxes, QVBoxLayout* timeContainerLayout, QDateEdit* startDateEdit, QDateEdit* endDateEdit){
+    AppController::getInstance()->setTaskAttributes(task, firstWindow->getAttributesGrid(), firstWindow->getIsExternal());
+    AppController::getInstance()->setTaskFixedScheduleValues(daysCheckBoxes, timeContainerLayout, startDateEdit, endDateEdit);
     AppController::getInstance()->updateTaskInDatabase(task);
     Scheduler::getInstance()->removeTaskFromQueue(task->getTaskName());
     AppController::getInstance()->callAddTaskToSchedule();
@@ -138,5 +151,7 @@ TaskCreationSchedulingUIDirector* TaskUpdateWindowUIDecorator::getSecondWindowDi
 QStackedWidget* TaskUpdateWindowUIDecorator::getStackedWindows(){
     return this->stackedWindows;
 }
+
+
 
 

@@ -11,6 +11,7 @@
 #include <AppController.h>
 #include <Scheduler.h>
 #include <Task2.cpp>
+#include <TaskWindowUICreator.h>
 AppController* AppController::instance = nullptr;
 
 
@@ -101,6 +102,29 @@ void AppController::setTaskAttributes(Task* newTask, QGridLayout* attributesGrid
 }
 
 
+void AppController::setTaskFixedScheduleValues(QCheckBox* daysCheckBoxes, QVBoxLayout* timeContainerLayout, QDateEdit* startEdit, QDateEdit* endDateEdit){
+    taskTail->setIsRepeatable(false);
+    taskTail->setStartDate(startEdit->date());
+    taskTail->setEndDate(endDateEdit->date());
+    for(int day = 0; day < 7; day++){
+        if(daysCheckBoxes[day].isChecked()){
+            taskTail->getScheduling()[day]->setDay(day);
+            for(int time = 0; time < timeContainerLayout[day].count(); time++){
+                if(time == 0){
+                    taskTail->getScheduling()[day]->setStartTime(new Schedule::Time(qobject_cast<QTimeEdit*>(timeContainerLayout[day].itemAt(time)->widget())->time()));
+                    taskTail->getScheduling()[day]->setIterTime(taskTail->getScheduling()[day]->getStartTime());
+                }
+                else{
+                    taskTail->getScheduling()[day]->getIterTime()->nextTime = new Schedule::Time(qobject_cast<QTimeEdit*>(timeContainerLayout[day].itemAt(time)->widget())->time());
+                    taskTail->getScheduling()[day]->setIterTime(taskTail->getScheduling()[day]->getIterTime()->nextTime);
+                }
+            }
+            taskTail->getScheduling()[day]->setIterTime(taskTail->getScheduling()[day]->getStartTime());
+        }
+
+    }
+}
+
 void AppController::setTaskRepeatableScheduleValues(QCheckBox* hourCheckBox, QCheckBox* secondCheckBox, QDateEdit* startDateEdit, QDateEdit* endDateEdit, QTimeEdit* startTime, QSpinBox* repeatableAmount){
     QDate startDate = startDateEdit->date();
     int day = startDate.dayOfWeek() - 1;
@@ -113,29 +137,13 @@ void AppController::setTaskRepeatableScheduleValues(QCheckBox* hourCheckBox, QCh
     for(int i = 0; i < 7; i++){
         if(hourCheckBox->isChecked()){
             taskTail->getScheduling()[i]->setRepeatableHours(repeatableAmount->value());
+            taskTail->getScheduling()[i]->setRepeatableSeconds(-1);
         }
         else{
+            taskTail->getScheduling()[i]->setRepeatableHours(-1);
             taskTail->getScheduling()[i]->setRepeatableSeconds(repeatableAmount->value());
         }
     }
-    /*for(int i = 0; i < 7; i++){
-        QCheckBox* dayCheckBox = qobject_cast<QCheckBox*>(daysLayout->itemAt(i)->widget());
-        if(dayCheckBox->isChecked()){
-            taskTail->getScheduling()[i]->setIsRepeatable(true);
-            taskTail->getScheduling()[i]->setStartTime(new Schedule::Time(qobject_cast<QTimeEdit*>(startTimeContainerLayout->itemAt(1)->widget())->time()));
-            taskTail->getScheduling()[i]->setIterTime(taskTail->getScheduling()[i]->getStartTime());
-            qDebug() << taskTail->getScheduling()[i]->getIterTime();
-            if(qobject_cast<QCheckBox*>(checkBoxLayout->itemAt(0)->widget())->isChecked()){
-                taskTail->getScheduling()[i]->setRepeatableHours(qobject_cast<QSpinBox*>(repeatableContainerLayout->itemAt(1)->widget())->value());
-            }
-            else{
-                taskTail->getScheduling()[i]->setRepeatableSeconds(qobject_cast<QSpinBox*>(repeatableContainerLayout->itemAt(1)->widget())->value());
-            }
-        }
-        else{
-            taskTail->getScheduling()[i] = nullptr;
-        }
-    }*/
 }
 
 
@@ -152,7 +160,7 @@ void AppController::saveTaskToDatabase(){
         QString jsonString = jsonDocument.toJson(QJsonDocument::Compact);
         query.bindValue(":parameters", jsonString);
         query.bindValue(":isExternal", taskTail->getIsExternal());
-        query.bindValue(":isRepeatable", true);
+        query.bindValue(":isRepeatable", taskTail->getIsRepeatable());
         query.bindValue("command", taskTail->getTaskCommand());
         query.bindValue(":startDate", taskTail->getStartDate());
         query.bindValue(":endDate", taskTail->getEndDate());
@@ -175,10 +183,15 @@ void AppController::saveTaskToDatabase(){
                 schedule[i]->setIdDatabase(scheduleId.toInt());
                 query.clear();
 
-                query.prepare("INSERT INTO Time (scheduleId, time) VALUE (:scheduleId, :time);");
-                query.bindValue(":scheduleId", scheduleId.value<int>());
-                query.bindValue(":time", schedule[i]->getStartTime()->time);
-                query.exec();
+                Schedule::Time* iterTime = schedule[i]->getStartTime();
+                while(iterTime){
+                    query.prepare("INSERT INTO Time (scheduleId, time) VALUE (:scheduleId, :time);");
+                    query.bindValue(":scheduleId", scheduleId.value<int>());
+                    query.bindValue(":time", iterTime->time);
+                    query.exec();
+                    iterTime = iterTime->nextTime;
+                }
+
             }
         }
     }
@@ -230,7 +243,7 @@ void AppController::updateTaskInDatabase(Task* task){
         QString jsonString = jsonDocument.toJson(QJsonDocument::Compact);
         query.bindValue(":parameters", jsonString);
         query.bindValue(":isExternal", task->getIsExternal());
-        query.bindValue(":isRepeatable", true);
+        query.bindValue(":isRepeatable", task->getIsRepeatable());
         query.bindValue("command", task->getTaskCommand());
         query.bindValue(":startDate", task->getStartDate());
         query.bindValue(":endDate", task->getEndDate());
@@ -250,12 +263,19 @@ void AppController::updateTaskInDatabase(Task* task){
                 query.bindValue(":repeatableSeconds", schedule[i]->getRepeatableSeconds());
                 query.exec();
                 query.clear();
-
-                query.prepare("UPDATE Time SET scheduleId = :scheduleId, time = :time WHERE scheduleId = :scheduleId;");
-                query.bindValue(":scheduleId", schedule[i]->getIdDatabase());
-                query.bindValue(":time", schedule[i]->getStartTime()->time);
-                query.exec();
+                Schedule::Time* iterTime = schedule[i]->getStartTime();
+                while(iterTime){
+                    query.prepare("UPDATE Time SET scheduleId = :scheduleId, time = :time WHERE scheduleId = :scheduleId;");
+                    query.bindValue(":scheduleId", schedule[i]->getIdDatabase());
+                    query.bindValue(":time", schedule[i]->getStartTime()->time);
+                    query.exec();
+                    iterTime = iterTime->nextTime;
+                }
             }
         }
     }
 }
+
+
+
+
