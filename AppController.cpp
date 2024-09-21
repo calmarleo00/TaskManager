@@ -22,7 +22,10 @@ AppController* AppController::getInstance() {
     return instance;
 }
 
-
+/* Crea una nuova attività.
+ * Se esiste già un'attività con lo stesso nome, non viene creato un nuovo oggetto.
+ * Utilizza la griglia attributesGrid per ottenere i parametri dell'attività, come nome e descrizione.
+ * Se l'attività è "esterna", crea una nuova istanza di Task, altrimenti istanzia un oggetto di tipo specifico in base alle classi inserite. */
 void AppController::createNewTask(QGridLayout* attributesGrid, bool isExternal){
     QString taskName = qobject_cast<QTextEdit*>(attributesGrid->itemAt(2)->widget())->toPlainText();
     Task* newTask = taskHead;
@@ -44,9 +47,6 @@ void AppController::createNewTask(QGridLayout* attributesGrid, bool isExternal){
             }
         }
         setTaskAttributes(tmpTask, attributesGrid, isExternal);
-    }
-    else{
-        // setTaskAttributes(newTask, attributesGrid, isExternal);
     }
 }
 
@@ -120,6 +120,12 @@ void AppController::setTaskFixedScheduleValues(QCheckBox* daysCheckBoxes, QVBoxL
                 }
             }
             taskTail->getScheduling()[day]->setIterTime(taskTail->getScheduling()[day]->getStartTime());
+            qDebug() << day;
+            qDebug() << taskTail->getScheduling()[day]->getStartTime()->time;
+        }
+        else{
+            delete taskTail->getScheduling()[day];
+            taskTail->getScheduling()[day] = new Schedule();
         }
 
     }
@@ -146,7 +152,8 @@ void AppController::setTaskRepeatableScheduleValues(QCheckBox* hourCheckBox, QCh
     }
 }
 
-
+/* Salva l'attività attualmente puntata da taskTail nel database.
+ * Crea una voce nella tabella Task e inserisce anche le informazioni di pianificazione nella tabella Schedule. */
 void AppController::saveTaskToDatabase(){
     QSqlDatabase db = QSqlDatabase::database("ticare_connection");
 
@@ -230,6 +237,8 @@ void AppController::callAddTaskToSchedule(){
     Scheduler::getInstance()->addTaskToQueue(taskTail);
 }
 
+/* Aggiorna una determinata attività nel database.
+ * Viene aggiornata la tabella Task con i nuovi parametri dell'attività, così come la tabella Schedule con le nuove informazioni di pianificazione. */
 void AppController::updateTaskInDatabase(Task* task){
     QSqlDatabase db = QSqlDatabase::database("ticare_connection");
 
@@ -271,6 +280,14 @@ void AppController::updateTaskInDatabase(Task* task){
                     query.exec();
                     iterTime = iterTime->nextTime;
                 }
+            }
+            // Se il task era stato impostato per essere eseguito in un certo giorno e l'esecuzione viene annullata nella modifica, bisogna essere certi che l'entry corrispondente sia eliminata
+            else{
+                query.prepare("DELETE FROM Schedule WHERE taskId = :taskId AND day = :day;");
+                query.bindValue(":taskId", task->getTaskName());
+                query.bindValue(":day", i + 1);
+                query.exec();
+                query.clear();
             }
         }
     }

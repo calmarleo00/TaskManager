@@ -58,6 +58,8 @@ void TaskUpdateWindowUIDecorator::setupTaskWidgetsUI(){
         qobject_cast<QCheckBox*>(bottomContainerLayout->itemAt(0)->widget())->setChecked(false);
         qobject_cast<QCheckBox*>(bottomContainerLayout->itemAt(1)->widget())->setChecked(true);
     }
+    qobject_cast<QCheckBox*>(bottomContainerLayout->itemAt(0)->widget())->setEnabled(false);
+    qobject_cast<QCheckBox*>(bottomContainerLayout->itemAt(1)->widget())->setEnabled(false);
     // Il bottone "Next >" deve essere ora collegato al metodo implementato all'interno del decorator
     // Questo per permettere al Decorator di interagire con il Director per costruire la pagina e successivamente inserirvi i dati corretti
     QPushButton* nextButton = qobject_cast<QPushButton*>(bottomContainerLayout->itemAt(3)->widget());
@@ -67,8 +69,18 @@ void TaskUpdateWindowUIDecorator::setupTaskWidgetsUI(){
 }
 
 
-void TaskUpdateWindowUIDecorator::backAttributeSelectionPage(){}
-void TaskUpdateWindowUIDecorator::backSchedulingSelectionPage(){}
+void TaskUpdateWindowUIDecorator::backAttributeSelectionPage(){
+    component->getStackedWindows()->setCurrentWidget(firstWindow->getTaskAttributeWindowWidget());
+    component->getStackedWindows()->setMaximumSize(firstWindow->getTaskAttributeWindowWidget()->minimumWidth(), firstWindow->getTaskAttributeWindowWidget()->minimumHeight());
+    component->getStackedWindows()->setMaximumSize(firstWindow->getTaskAttributeWindowWidget()->maximumWidth(), firstWindow->getTaskAttributeWindowWidget()->maximumHeight());
+    component->getStackedWindows()->show();
+}
+
+void TaskUpdateWindowUIDecorator::backSchedulingSelectionPage(){
+    component->getStackedWindows()->setFixedSize(schedulingSelectionWidget->maximumWidth(), schedulingSelectionWidget->maximumHeight());
+    component->getStackedWindows()->setCurrentWidget(schedulingSelectionWidget);
+    component->getStackedWindows()->show();
+}
 
 void TaskUpdateWindowUIDecorator::nextSchedulingSelectionPage(QGridLayout* attributesGrid, bool isExternal){
     taskName = qobject_cast<QTextEdit*>(attributesGrid->itemAt(2)->widget())->toPlainText();
@@ -80,11 +92,43 @@ void TaskUpdateWindowUIDecorator::nextSchedulingSelectionPage(QGridLayout* attri
 
 void TaskUpdateWindowUIDecorator::TaskUpdateWindowUIDecorator::nextSchedulePage(){
     if(!task->getIsRepeatable()){
-        /*TaskFixedSchedulingUIBuilder* taskSchedulingWindowBuilder = new TaskFixedSchedulingUIBuilder();
+        TaskFixedSchedulingUIBuilder* taskSchedulingWindowBuilder = new TaskFixedSchedulingUIBuilder();
         connect(taskSchedulingWindowBuilder, &TaskFixedSchedulingUIBuilder::backPageSignal, this, &TaskUpdateWindowUIDecorator::backSchedulingSelectionPage);
+        connect(taskSchedulingWindowBuilder, &TaskFixedSchedulingUIBuilder::closePageFixedSignal, this, &TaskUpdateWindowUIDecorator::closeFixedWindow);
         secondWindowDirector = new TaskCreationSchedulingUIDirector(taskSchedulingWindowBuilder);
         secondWindowDirector->buildWindow();
-        stackedWindows->setCurrentWidget(taskSchedulingWindowBuilder->getResult());*/
+
+        taskSchedulingWindowBuilder->getStartDateEdit()->setDate(task->getStartDate());
+        taskSchedulingWindowBuilder->getEndDateEdit()->setDate(task->getEndDate());
+
+        QCheckBox* daysCheckBoxes = taskSchedulingWindowBuilder->getDaysCheckBoxes();
+        QVBoxLayout* timeContainerLayout = taskSchedulingWindowBuilder->getTimeContainerLayout();
+        for(int i = 0; i < 7; i++){
+            if(task->getScheduling()[i]->getDay() != -1){
+                qDebug() << i;
+                daysCheckBoxes[i].setChecked(true);
+                Schedule::Time* iterTime = task->getScheduling()[i]->getStartTime();
+                qobject_cast<QTimeEdit*>(timeContainerLayout[i].itemAt(0)->widget())->setTime(iterTime->time);
+                iterTime = iterTime->nextTime;
+                while(iterTime){
+                    QTimeEdit* timeEdit = new QTimeEdit(taskSchedulingWindowBuilder->getResult());
+                    timeEdit->setTime(iterTime->time);
+                    qDebug() << timeEdit->time();
+                    timeContainerLayout[i].addWidget(timeEdit);
+                    timeEdit->update();
+                    iterTime = iterTime->nextTime;
+                }
+            }
+            else{
+                daysCheckBoxes[i].setChecked(false);
+            }
+        }
+        component->getStackedWindows()->addWidget(taskSchedulingWindowBuilder->getResult());
+        component->getStackedWindows()->setCurrentWidget(taskSchedulingWindowBuilder->getResult());
+        component->getStackedWindows()->setMinimumSize(taskSchedulingWindowBuilder->getResult()->minimumWidth(), taskSchedulingWindowBuilder->getResult()->minimumHeight());
+        component->getStackedWindows()->setMaximumSize(taskSchedulingWindowBuilder->getResult()->maximumWidth(), taskSchedulingWindowBuilder->getResult()->maximumHeight());
+        component->getStackedWindows()->show();
+
     }
     else if(task->getIsRepeatable()){
         TaskRepeatableSchedulingUIBuilder* taskSchedulingWindowBuilder = new TaskRepeatableSchedulingUIBuilder();
@@ -107,6 +151,7 @@ void TaskUpdateWindowUIDecorator::TaskUpdateWindowUIDecorator::nextSchedulePage(
         }
         component->getStackedWindows()->addWidget(taskSchedulingWindowBuilder->getResult());
         component->getStackedWindows()->setCurrentWidget(taskSchedulingWindowBuilder->getResult());
+        component->getStackedWindows()->setMinimumSize(taskSchedulingWindowBuilder->getResult()->minimumWidth(), taskSchedulingWindowBuilder->getResult()->minimumHeight());
         component->getStackedWindows()->setMaximumSize(taskSchedulingWindowBuilder->getResult()->maximumWidth(), taskSchedulingWindowBuilder->getResult()->maximumHeight());
         component->getStackedWindows()->show();
     }

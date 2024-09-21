@@ -101,10 +101,22 @@ void MainWindowUI::addNewTaskToMainWindowUI(QString taskName, QString taskDescri
     detailButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     taskInformationGroupLayout->addWidget(detailButton, 0, Qt::AlignBottom);
     detailButton->connect(detailButton, &QPushButton::released, this, [this, taskName]{this->openNewTaskUpdateWindowUI(taskName);});
-
-    // Posiziona il task nel layout a griglia della finestra principale
-    gridTaskMainWindowLayout->addWidget(taskInformationGroup, 0, col, 1, 1);
-    gridTaskMainWindowLayout->setColumnMinimumWidth(col, 220);
+    qDebug() << gridTaskMainWindowLayout->columnCount();
+    // Individua una posizione valida nella griglia in cui inserire il task
+    bool added = false;
+    for(int i = 0; i < gridTaskMainWindowLayout->columnCount(); i++){
+        QLayoutItem* layoutItem = gridTaskMainWindowLayout->itemAtPosition(0, i);
+        if (!layoutItem || (layoutItem && layoutItem->widget() == nullptr)) {
+            gridTaskMainWindowLayout->addWidget(taskInformationGroup, 0, i, 1, 1);
+            gridTaskMainWindowLayout->setColumnMinimumWidth(i, 220);
+            added = true;
+            break;
+        }
+    }
+    if(!added){
+        gridTaskMainWindowLayout->addWidget(taskInformationGroup, 0, col, 1, 1);
+        gridTaskMainWindowLayout->setColumnMinimumWidth(col, 220);
+    }
     col += 1;
 
     // Aggiorna il TrayIconMenu con il nuovo task.
@@ -169,4 +181,8 @@ void MainWindowUI::updateTaskToMainWindowUI(Task* task){
 void MainWindowUI::closeEvent(QCloseEvent *event) {
         getInstance()->hide();
         event->ignore();
+}
+
+void MainWindowUI::showMainWindow(){
+    this->showMaximized();
 }

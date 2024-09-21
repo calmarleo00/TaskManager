@@ -61,10 +61,11 @@ class TaskCreationWindowUI : public TaskWindowUI{
          * Chiede all'AppController di creare un oggetto Task temporaneo con le informazioni parziali fornite fino a quel momento.
          * Passa alla pagina di selezione della schedulazione nel stackedWindows. */
         void nextSchedulingSelectionPage(QGridLayout* attributesGrid, bool isExternal) override;
-        /* Questo metodo viene utilizzato per chiudere la finestra di creazione del task dopo aver completato la configurazione della schedulazione ripetibile.
-         * Salva i dettagli del task e invoca i metodi del controller per salvare il task nel database, aggiungendo il task al programma. */
+        /* Questi metodi vengono utilizzati per chiudere la finestra di creazione del task dopo aver completato la configurazione della schedulazione ripetibile.
+         * Salvano i dettagli del task e invoca i metodi del controller per salvare il task nel database, aggiungendo il task al programma. */
         void closeRepeatableWindow(QCheckBox* hourCheckBox, QCheckBox* secondCheckBox, QDateEdit* startDateEdit, QDateEdit* endDateEdit, QTimeEdit* startTime, QSpinBox* repeatableAmount) override;
         void closeFixedWindow(QCheckBox* daysCheckBoxes, QVBoxLayout* timeContainerLayout, QDateEdit* startEdit, QDateEdit* endDateEdit) override;
+        // Disabilitano i checkbox per la selezione della tipologia di schedulazione in base alla selezione dell'utente, garantendo che solo una delle due opzioni possa essere selezionata alla volta.
         void disableRepeatableCheckBox(int value);
         void disableFixedCheckBox(int value);
 };

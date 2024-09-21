@@ -29,6 +29,9 @@ class TaskRepeatableSchedulingUIBuilder : public TaskCreationSchedulingUIBuilder
         QSpinBox* numTime;
 
     public:
+        TaskRepeatableSchedulingUIBuilder(){
+            taskFixedScheduling = new QWidget();
+        }
         // Inizializza la finestra di pianificazione, stabilendo dimensioni minime e massime e organizzando il layout.
         void initializeWindowStep() override;
         // Aggiunge un calendario e due QDateEdit (per le date di inizio e fine), insieme alla gestione delle date selezionate.

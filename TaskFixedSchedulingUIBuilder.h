@@ -20,6 +20,7 @@ protected:
 
 public:
     TaskFixedSchedulingUIBuilder(){
+        taskFixedScheduling = new QWidget();
         daysCheckBoxes = new QCheckBox[7];
         daysTimeWidgets = new QWidget[7];
         timeContainerLayout = new QVBoxLayout[7];
@@ -37,6 +38,9 @@ public:
     // Getters delle variabili
     QDateEdit* getStartDateEdit() override;
     QDateEdit* getEndDateEdit() override;
+    QCheckBox* getDaysCheckBoxes();
+    QVBoxLayout* getTimeContainerLayout();
+
     // Restituisce il widget principale della finestra, che può essere integrato in altre parti dell'applicazione.
     QWidget* getResult() override;
 

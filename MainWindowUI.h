@@ -50,6 +50,9 @@ class MainWindowUI: public QWidget{
         void openNewTaskCreationWindowUI();
         /* Crea una finestra per l'aggiornamento di un nuovo task delegando all'TaskWindowUICreator il compito di richiamare il metodo corretto. */
         void openNewTaskUpdateWindowUI(QString taskName);
+        // Permette al TrayIconMenu di poter riprendere la visualizzazione della finestra principale
+        void showMainWindow();
+
 };
 
 #endif // MAINWINDOWUI_H

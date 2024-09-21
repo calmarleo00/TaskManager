@@ -25,27 +25,34 @@ void Scheduler::updateTimerFirstTask(){
     if(timerFirstTask.isActive()){
         timerFirstTask.stop();
     }
+    if(headTaskQueue){
+        int day = QDate::currentDate().dayOfWeek() - 1;
+        QTime firstTaskTime = headTaskQueue->task->getScheduling()[day]->getIterTime()->time;
+        int interval = QTime::currentTime().msecsTo(firstTaskTime);
+        if(interval <= 0){
+            executeTask();
+        }
+        else{
+            timerFirstTask.setInterval(interval);
+            timerFirstTask.setSingleShot(true);
+            timerFirstTask.start();
+        }
+        QString str = QString::fromStdString(std::to_string(interval));
+        qDebug() << "Intervallo:" + str;
+    }
 
-    int day = QDate::currentDate().dayOfWeek() - 1;
-    QTime firstTaskTime = headTaskQueue->task->getScheduling()[day]->getIterTime()->time;
-    int interval = QTime::currentTime().msecsTo(firstTaskTime);
-    if(interval <= 0){
-        executeTask();
-    }
-    else{
-        timerFirstTask.setInterval(interval);
-        timerFirstTask.setSingleShot(true);
-        timerFirstTask.start();
-    }
-    QString str = QString::fromStdString(std::to_string(interval));
-    qDebug() << "Intervallo:" + str;
 }
 
 void Scheduler::addTaskToQueue(Task* task){
     QDateTime currentDate;
+    /* Affinché il task venga aggiunto alla coda deve rispettare una certa serie di condizioni necessarie
+     * -> La data attuale dev'essere compresa tra il suo periodo d'inizio e di fine, altrimenti non viene nemmeno considerato
+     * -> Il task dev'essere stato impostato per l'esecuzione in quel giorno della settimana (controllato tramite l'int assegnato al giorno, se -1 significa che l'utente non ha impostato alcun tempo per quel giorno)
+     * -> Il tempo di esecuzione del task dev'essere maggiore rispetto al tempo attuale, non dev'essere dunque eseguito */
     int currentDay = currentDate.currentDateTime().date().dayOfWeek() - 1;
     if(task->getStartDate() <= currentDate.currentDateTime().date()
         && currentDate.currentDateTime().date() <= task->getEndDate()
+        && task->getScheduling()[currentDay]->getDay() != -1
         && task->getScheduling()[currentDay]->getIterTime()->time >= currentDate.currentDateTime().time()){
         if(headTaskQueue && tailTaskQueue){
             TaskScheduleQueue* firstPairWindow = headTaskQueue;
@@ -123,9 +130,22 @@ void Scheduler::executeTask(){
     Task* task = headTaskQueue->task;
     qDebug() << task->getIsExternal();
     if(task->getIsExternal()){
-        QProcess* process = new QProcess();
-        process->connect(process, &QProcess::finished, this, [this, task]{this->postExecuteTask(task);});
+        process = new QProcess(this);
+        process->connect(process, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
+                         this, [this, task](int exitCode, QProcess::ExitStatus exitStatus) {
+                             this->postExecuteTask(task);
+                         });
+        connect(process, &QProcess::errorOccurred, [](QProcess::ProcessError error) {
+            qDebug() << "Process error:" << error;
+        });
+        connect(process, &QProcess::stateChanged, [](QProcess::ProcessState state) {
+            qDebug() << "Process state changed:" << state;
+        });
         process->start(task->getTaskCommand());
+        process->waitForFinished(70000);
+        if(process->state() != QProcess::NotRunning){
+            process->kill();
+        }
     }
     else{
         task->execute();
@@ -138,6 +158,7 @@ void Scheduler::postExecuteTask(Task* task){
     TaskScheduleQueue* tempTaskPtr = headTaskQueue->nextScheduleTask;
     delete headTaskQueue;
     headTaskQueue = tempTaskPtr;
+    updateTimerFirstTask();
     addTaskToQueue(task);
 }
 

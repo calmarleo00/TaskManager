@@ -177,3 +177,10 @@ QDateEdit* TaskFixedSchedulingUIBuilder::getEndDateEdit(){
     return this->endDateEdit;
 }
 
+QCheckBox* TaskFixedSchedulingUIBuilder::getDaysCheckBoxes(){
+    return this->daysCheckBoxes;
+}
+
+QVBoxLayout* TaskFixedSchedulingUIBuilder::getTimeContainerLayout(){
+    return this->timeContainerLayout;
+}

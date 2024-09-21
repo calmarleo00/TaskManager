@@ -177,8 +177,8 @@ void TaskAttributeUI::changeValue(QComboBox* comboBox) {
     }
 }
 
-/* If the isExternal check box is flagged, then be sure to remove all the attributes inserted.
- * Then adds the new and only attribute needed: the text edit in which will be inserted the command line instruction */
+/* Disabilita l'aggiunta di nuovi attributi se viene selezionata l'opzione per un'attività esterna.
+ * Se attivata, rimuove gli attributi esistenti e aggiunge solo il campo per un comando stringa. */
 void TaskAttributeUI::disableAddition(int state){
     if(state){
         addAttributeButton->setDisabled(true);

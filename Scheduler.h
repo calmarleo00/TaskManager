@@ -1,3 +1,4 @@
+#include "qprocess.h"
 #include "qtimer.h"
 #include <Task.h>
 #ifndef SCHEDULER_H
@@ -6,6 +7,7 @@ class Scheduler : public QObject{
     Q_OBJECT
 public:
     static Scheduler* schedulerInstance;
+    QProcess* process;
 private:
     struct TaskScheduleQueue{
         Task* task;
