@@ -105,7 +105,6 @@ void TaskUpdateWindowUIDecorator::TaskUpdateWindowUIDecorator::nextSchedulePage(
         QVBoxLayout* timeContainerLayout = taskSchedulingWindowBuilder->getTimeContainerLayout();
         for(int i = 0; i < 7; i++){
             if(task->getScheduling()[i]->getDay() != -1){
-                qDebug() << i;
                 daysCheckBoxes[i].setChecked(true);
                 Schedule::Time* iterTime = task->getScheduling()[i]->getStartTime();
                 qobject_cast<QTimeEdit*>(timeContainerLayout[i].itemAt(0)->widget())->setTime(iterTime->time);
@@ -113,7 +112,6 @@ void TaskUpdateWindowUIDecorator::TaskUpdateWindowUIDecorator::nextSchedulePage(
                 while(iterTime){
                     QTimeEdit* timeEdit = new QTimeEdit(taskSchedulingWindowBuilder->getResult());
                     timeEdit->setTime(iterTime->time);
-                    qDebug() << timeEdit->time();
                     timeContainerLayout[i].addWidget(timeEdit);
                     timeEdit->update();
                     iterTime = iterTime->nextTime;

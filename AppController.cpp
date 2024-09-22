@@ -120,8 +120,6 @@ void AppController::setTaskFixedScheduleValues(QCheckBox* daysCheckBoxes, QVBoxL
                 }
             }
             taskTail->getScheduling()[day]->setIterTime(taskTail->getScheduling()[day]->getStartTime());
-            qDebug() << day;
-            qDebug() << taskTail->getScheduling()[day]->getStartTime()->time;
         }
         else{
             delete taskTail->getScheduling()[day];

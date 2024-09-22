@@ -101,7 +101,6 @@ void MainWindowUI::addNewTaskToMainWindowUI(QString taskName, QString taskDescri
     detailButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     taskInformationGroupLayout->addWidget(detailButton, 0, Qt::AlignBottom);
     detailButton->connect(detailButton, &QPushButton::released, this, [this, taskName]{this->openNewTaskUpdateWindowUI(taskName);});
-    qDebug() << gridTaskMainWindowLayout->columnCount();
     // Individua una posizione valida nella griglia in cui inserire il task
     bool added = false;
     for(int i = 0; i < gridTaskMainWindowLayout->columnCount(); i++){

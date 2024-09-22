@@ -37,8 +37,6 @@ void Scheduler::updateTimerFirstTask(){
             timerFirstTask.setSingleShot(true);
             timerFirstTask.start();
         }
-        QString str = QString::fromStdString(std::to_string(interval));
-        qDebug() << "Intervallo:" + str;
     }
 
 }
@@ -105,7 +103,6 @@ void Scheduler::addTaskToQueue(Task* task){
 
     TaskScheduleQueue* iterTaskQueue = headTaskQueue;
     while(iterTaskQueue){
-        qDebug() << iterTaskQueue->task->getTaskName();
         task->getScheduling()[currentDay]->getStartTime();
         iterTaskQueue = iterTaskQueue->nextScheduleTask;
     }
@@ -128,19 +125,12 @@ void Scheduler::populateTaskScheduleQueue(){
 
 void Scheduler::executeTask(){
     Task* task = headTaskQueue->task;
-    qDebug() << task->getIsExternal();
     if(task->getIsExternal()){
         process = new QProcess(this);
         process->connect(process, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
                          this, [this, task](int exitCode, QProcess::ExitStatus exitStatus) {
                              this->postExecuteTask(task);
                          });
-        connect(process, &QProcess::errorOccurred, [](QProcess::ProcessError error) {
-            qDebug() << "Process error:" << error;
-        });
-        connect(process, &QProcess::stateChanged, [](QProcess::ProcessState state) {
-            qDebug() << "Process state changed:" << state;
-        });
         process->start(task->getTaskCommand());
         process->waitForFinished(70000);
         if(process->state() != QProcess::NotRunning){
