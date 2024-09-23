@@ -10,8 +10,9 @@
 - Estrarre i file in una cartella del computer
 - Copiare il contenuto della cartella sqldrivers, all'interno della cartella debug, all'interno della cartella con all'interno la versione di Qt (eg. QT/6.2.4/mingw_64/plugins/sqldrivers)
 - I restanti 3 file all'interno della cartella debug, copiarli nella cartella debug del progetto
+- Nel file main.cpp sono presenti i dati per la configurazione della connessione con il database, nel caso necessario aggiungere anche la password
 - Fare la rebuild del progetto
 
 ## Documentazione
 All'interno della cartella "Documentazione" nel repository, sono presenti 3 file PDF. Due sono diagrammi delle classe in UML. Il file rimanente contiene una breve descrizione del progetto e della sua struttura, 
-nonché come possa essere utilizzato tramite l'inserimento di due task di base supportati.
+nonché come possa essere utilizzato tramite l'inserimento di due task di base supportati. (N.B, nel caso di task ripetibili assicurarsi che il tempo d'inizio sia successivo a quello attuale, altrimenti partirà la settimana successiva)
