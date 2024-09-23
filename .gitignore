@@ -6,7 +6,6 @@
 *.a
 *.core
 *.moc
-*.o
 *.obj
 *.orig
 *.rej
@@ -69,6 +68,5 @@ CMakeLists.txt.user*
 
 # Binaries
 # --------
-*.dll
-*.exe
+
 
