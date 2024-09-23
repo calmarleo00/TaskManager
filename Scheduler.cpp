@@ -50,8 +50,7 @@ void Scheduler::addTaskToQueue(Task* task){
     int currentDay = currentDate.currentDateTime().date().dayOfWeek() - 1;
     if(task->getStartDate() <= currentDate.currentDateTime().date()
         && currentDate.currentDateTime().date() <= task->getEndDate()
-        && task->getScheduling()[currentDay]->getDay() != -1
-        && task->getScheduling()[currentDay]->getIterTime()->time >= currentDate.currentDateTime().time()){
+        && task->getScheduling()[currentDay]->getDay() != -1){
         if(headTaskQueue && tailTaskQueue){
             TaskScheduleQueue* firstPairWindow = headTaskQueue;
             TaskScheduleQueue* secondPairWindow = headTaskQueue->nextScheduleTask;
