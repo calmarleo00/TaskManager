@@ -87,7 +87,7 @@ void TaskRepeatableSchedulingUIBuilder::buildTimeStep() {
 
     QLabel* selectStartTime = new QLabel("Select start time:", timeScheduleInformationContainer);
     startTime = new QTimeEdit();
-    startTime->setMinimumTime(QTime(0, 1, 0));
+    startTime->setMinimumTime(QTime(QTime::currentTime().hour(), QTime::currentTime().minute(), 0).addSecs(60));
     startTime->setMaximumTime(QTime(23, 59, 0));
     startTimeContainerLayout->addWidget(selectStartTime, 0, Qt::AlignLeft);
     startTimeContainerLayout->addWidget(startTime, 0, Qt::AlignRight);
@@ -99,7 +99,7 @@ void TaskRepeatableSchedulingUIBuilder::buildTimeStep() {
 
     QLabel* selectRepeatable = new QLabel("How often to repeat:", repeatableContainer);
     numTime = new QSpinBox(repeatableContainer);
-    numTime->setMinimum(1);
+    numTime->setMinimum(10);
     numTime->setMaximum(100);
     repeatableContainerLayout->addWidget(selectRepeatable, 0, Qt::AlignLeft);
     repeatableContainerLayout->addWidget(numTime, 0, Qt::AlignRight);

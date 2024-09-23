@@ -132,7 +132,7 @@ void Scheduler::executeTask(){
                              this->postExecuteTask(task);
                          });
         process->start(task->getTaskCommand());
-        process->waitForFinished(70000);
+        process->waitForFinished(7000);
         if(process->state() != QProcess::NotRunning){
             process->kill();
         }
